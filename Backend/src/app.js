@@ -5,6 +5,7 @@ import cors from "cors";
 import config, {corsOptions} from "./config/env.js";
 import connectToSocket from "./controllers/socketManager.js";
 import userRoutes from "./routes/users.routes.js";
+import {notFound, errorHandler} from "./middleware/errors.js";
 
 const app = express();
 const server = createServer(app);
@@ -14,6 +15,8 @@ app.use(cors(corsOptions));
 app.use(express.json({limit: "50kb"}));
 app.use(express.urlencoded({extended: true, limit: "50kb"}));
 app.use("/api/v1/users", userRoutes);
+app.use(notFound);
+app.use(errorHandler);
 
 
 const start = async () => {
