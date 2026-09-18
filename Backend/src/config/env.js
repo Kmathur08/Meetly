@@ -12,3 +12,10 @@ const config = {
 };
 
 export default config;
+
+export const isAllowedOrigin = (origin) => !origin || config.clientOrigins.length === 0 || config.clientOrigins.includes(origin);
+
+export const corsOptions = {
+    origin: (origin, callback) => callback(null, isAllowedOrigin(origin)),
+    methods: ["GET", "POST"],
+};

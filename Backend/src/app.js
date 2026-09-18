@@ -2,7 +2,7 @@ import express from "express";
 import {createServer} from "http";
 import mongoose from "mongoose";
 import cors from "cors";
-import config from "./config/env.js";
+import config, {corsOptions} from "./config/env.js";
 import connectToSocket from "./controllers/socketManager.js";
 import userRoutes from "./routes/users.routes.js";
 
@@ -10,7 +10,7 @@ const app = express();
 const server = createServer(app);
 const io = connectToSocket(server)
 
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json({limit: "50kb"}));
 app.use(express.urlencoded({extended: true, limit: "50kb"}));
 app.use("/api/v1/users", userRoutes);
