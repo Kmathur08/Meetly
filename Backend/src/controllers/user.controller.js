@@ -10,23 +10,19 @@ const login = async (req, res) => {
 
     if(!username || !password) return res.status(httpStatus.BAD_REQUEST).json({message: "Please provide username and password"});
 
-    try {
-        const user = await User.findOne ({username});
+    const user = await User.findOne({username});
 
-        if(!user) return res.status(httpStatus.NOT_FOUND).json({message: "User not found"});
+    if(!user) return res.status(httpStatus.NOT_FOUND).json({message: "User not found"});
 
-        if(await bcrypt.compare(password, user.password)) {
-            let token = crypto.randomBytes(20).toString("hex");
+    if(await bcrypt.compare(password, user.password)) {
+        let token = crypto.randomBytes(20).toString("hex");
 
-            user.token = token;
-            await user.save();
-            return res.status(httpStatus.OK).json({message: "Login successful", token});
-        }
-
-        return res.status(httpStatus.UNAUTHORIZED).json({message: "Invalid username or password"});
-    } catch(e) {
-        return res.status(500).json({message: `Something went wrong ${e}. Please Try again`})
+        user.token = token;
+        await user.save();
+        return res.status(httpStatus.OK).json({message: "Login successful", token});
     }
+
+    return res.status(httpStatus.UNAUTHORIZED).json({message: "Invalid username or password"});
 }
 
 const register =  async (req, res) => {
@@ -40,25 +36,20 @@ const register =  async (req, res) => {
         return res.status(httpStatus.BAD_REQUEST).json({message: "Password must be at least 8 characters"});
     }
 
-    try{
-        const existingUser = await User.findOne({username});
+    const existingUser = await User.findOne({username});
 
-        if(existingUser) return res.status(httpStatus.FOUND).json({message: "User already exists"});
+    if(existingUser) return res.status(httpStatus.FOUND).json({message: "User already exists"});
 
-        const hashpassword = await bcrypt.hash(password, 10);
+    const hashpassword = await bcrypt.hash(password, 10);
 
-        const newuser = new User({
-            name : name,
-            username : username,
-            password : hashpassword
-        });
+    const newuser = new User({
+        name : name,
+        username : username,
+        password : hashpassword
+    });
 
-        await newuser.save();
-        return res.status(httpStatus.CREATED).json({message: "User registered successfully"});
-
-    } catch(e) {
-        return res.status(500).json({message: `Something went wrong ${e}. Please Try again`})
-    }
+    await newuser.save();
+    return res.status(httpStatus.CREATED).json({message: "User registered successfully"});
 }
 
 const forgotPassword = async (req, res) => {
