@@ -19,11 +19,12 @@ app.use(express.urlencoded({extended: true, limit: "50kb"}));
 
 const start = async () => {
     const connectionString = process.env.MONGODB_URI;
-    if (!connectionString) {
-        throw new Error("MONGODB_URI is not configured");
+    if (connectionString) {
+        await mongoose.connect(connectionString);
+    } else {
+        console.warn("MONGODB_URI is not configured; starting without database connection");
     }
 
-    await mongoose.connect(connectionString);
     server.listen(app.get("port"), () => {
         console.log(`Server is running on port ${app.get("port")}`);
     });
