@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import {User} from "../models/users.models.js";
 import crypto from "crypto"; 
 import {Meeting} from "../models/meeting.model.js";
+import {isValidName, isValidPassword, isValidUsername} from "../utils/validate.js";
 
 
 const login = async (req, res) => {
@@ -30,8 +31,16 @@ const register =  async (req, res) => {
         return res.status(httpStatus.BAD_REQUEST).json({message: "Name, username, and password are required"});
     }
 
-    if(password.length < 8) {
-        return res.status(httpStatus.BAD_REQUEST).json({message: "Password must be at least 8 characters"});
+    if(!isValidName(name)) {
+        return res.status(httpStatus.BAD_REQUEST).json({message: "Name must be between 1 and 60 characters"});
+    }
+
+    if(!isValidUsername(username)) {
+        return res.status(httpStatus.BAD_REQUEST).json({message: "Username must be 3-30 characters: letters, numbers, dots, dashes or underscores"});
+    }
+
+    if(!isValidPassword(password)) {
+        return res.status(httpStatus.BAD_REQUEST).json({message: "Password must be 8-72 characters"});
     }
 
     const existingUser = await User.findOne({username});
@@ -41,7 +50,7 @@ const register =  async (req, res) => {
     const hashpassword = await bcrypt.hash(password, 10);
 
     const newuser = new User({
-        name : name,
+        name : name.trim(),
         username : username,
         password : hashpassword
     });
