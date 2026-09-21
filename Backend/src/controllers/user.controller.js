@@ -3,15 +3,17 @@ import bcrypt from "bcrypt";
 import {User} from "../models/users.models.js";
 import crypto from "crypto"; 
 import {Meeting} from "../models/meeting.model.js";
-import {isValidName, isValidPassword, isValidUsername} from "../utils/validate.js";
+import {isValidName, isValidPassword, isValidUsername, normalizeUsername} from "../utils/validate.js";
 
 
 const login = async (req, res) => {
-    const {username, password} = req.body;
+    const {password} = req.body;
+    const username = normalizeUsername(req.body.username);
 
-    if(!username || !password) return res.status(httpStatus.BAD_REQUEST).json({message: "Please provide username and password"});
+    if(!username || typeof password !== "string" || !password) return res.status(httpStatus.BAD_REQUEST).json({message: "Please provide username and password"});
 
-    const user = await User.findOne({username});
+    // Accounts created before usernames were lower-cased are still stored with their original casing.
+    const user = await User.findOne({username}) || await User.findOne({username: req.body.username.trim()});
 
     if(user && await bcrypt.compare(password, user.password)) {
         let token = crypto.randomBytes(20).toString("hex");
@@ -25,7 +27,8 @@ const login = async (req, res) => {
 }
 
 const register =  async (req, res) => {
-    const {name,username,password} = req.body;
+    const {name, password} = req.body;
+    const username = normalizeUsername(req.body.username);
 
     if(!name || !username || !password) {
         return res.status(httpStatus.BAD_REQUEST).json({message: "Name, username, and password are required"});
