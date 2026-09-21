@@ -12,8 +12,8 @@ const login = async (req, res) => {
 
     if(!username || typeof password !== "string" || !password) return res.status(httpStatus.BAD_REQUEST).json({message: "Please provide username and password"});
 
-    // Accounts created before usernames were lower-cased are still stored with their original casing.
-    const user = await User.findOne({username}) || await User.findOne({username: req.body.username.trim()});
+    // Mongoose lower-cases the query value, and older accounts may still be stored with capitals, so match without case.
+    const user = await User.findOne({username}).collation({locale: "en", strength: 2});
 
     if(user && await bcrypt.compare(password, user.password)) {
         let token = crypto.randomBytes(20).toString("hex");
@@ -46,7 +46,7 @@ const register =  async (req, res) => {
         return res.status(httpStatus.BAD_REQUEST).json({message: "Password must be 8-72 characters"});
     }
 
-    const existingUser = await User.findOne({username});
+    const existingUser = await User.findOne({username}).collation({locale: "en", strength: 2});
 
     if(existingUser) return res.status(httpStatus.CONFLICT).json({message: "That username is already taken"});
 
