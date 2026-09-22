@@ -1,8 +1,10 @@
 import httpStatus from "http-status";
 import bcrypt from "bcrypt";
 import {User} from "../models/users.models.js";
-import crypto from "crypto"; 
+import config from "../config/env.js";
 import {Meeting} from "../models/meeting.model.js";
+import {Session} from "../models/session.model.js";
+import {createToken, hashToken} from "../utils/tokens.js";
 import {isValidName, isValidPassword, isValidUsername, normalizeUsername} from "../utils/validate.js";
 
 
@@ -16,11 +18,11 @@ const login = async (req, res) => {
     const user = await User.findOne({username}).collation({locale: "en", strength: 2});
 
     if(user && await bcrypt.compare(password, user.password)) {
-        let token = crypto.randomBytes(20).toString("hex");
+        const token = createToken();
+        const expiresAt = new Date(Date.now() + config.sessionDays * 24 * 60 * 60 * 1000);
 
-        user.token = token;
-        await user.save();
-        return res.status(httpStatus.OK).json({message: "Login successful", token});
+        await Session.create({user: user._id, tokenHash: hashToken(token), expiresAt});
+        return res.status(httpStatus.OK).json({message: "Login successful", token, expiresAt});
     }
 
     return res.status(httpStatus.UNAUTHORIZED).json({message: "Invalid username or password"});
