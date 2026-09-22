@@ -1,5 +1,5 @@
 import httpStatus from "http-status";
-import bcrypt, {hash} from "bcrypt";
+import bcrypt from "bcrypt";
 import {User} from "../models/users.models.js";
 import crypto from "crypto"; 
 
@@ -10,17 +10,19 @@ const login = async (req, res) => {
     if(!username || !password) return res.status(httpStatus.BAD_REQUEST).json({message: "Please provide username and password"});
 
     try {
-        const user = await User.findOne({username});
+        const user = await User.findOne ({username});
 
         if(!user) return res.status(httpStatus.NOT_FOUND).json({message: "User not found"});
 
-        if(bcrypt.compare(password, user.password)) {
+        if(await bcrypt.compare(password, user.password)) {
             let token = crypto.randomBytes(20).toString("hex");
 
             user.token = token;
             await user.save();
             return res.status(httpStatus.OK).json({message: "Login successful", token});
         }
+
+        return res.status(httpStatus.UNAUTHORIZED).json({message: "Invalid username or password"});
     } catch(e) {
         return res.status(500).json({message: `Something went wrong ${e}. Please Try again`})
     }
@@ -28,6 +30,14 @@ const login = async (req, res) => {
 
 const register =  async (req, res) => {
     const {name,username,password} = req.body;
+
+    if(!name || !username || !password) {
+        return res.status(httpStatus.BAD_REQUEST).json({message: "Name, username, and password are required"});
+    }
+
+    if(password.length < 8) {
+        return res.status(httpStatus.BAD_REQUEST).json({message: "Password must be at least 8 characters"});
+    }
 
     try{
         const existingUser = await User.findOne({username});
@@ -43,11 +53,22 @@ const register =  async (req, res) => {
         });
 
         await newuser.save();
-        res.status(httpStatus.CREATED).json({message: "User registered successfully"});
+        return res.status(httpStatus.CREATED).json({message: "User registered successfully"});
 
     } catch(e) {
-        res.json({message: `Something went wrong ${e}. Please Try again`})
+        return res.status(500).json({message: `Something went wrong ${e}. Please Try again`})
     }
 }
 
-export {login, register};
+const forgotPassword = async (req, res) => {
+    const {username} = req.body;
+
+    if(!username) {
+        return res.status(httpStatus.BAD_REQUEST).json({message: "Please provide your username"});
+    }
+
+    await User.exists({username});
+    return res.status(httpStatus.OK).json({message: "If an account exists, password reset instructions will be sent shortly."});
+}
+
+export {login, register, forgotPassword};
