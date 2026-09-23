@@ -75,6 +75,11 @@ const forgotPassword = async (req, res) => {
     return res.status(httpStatus.OK).json({message: "If an account exists, password reset instructions will be sent shortly."});
 }
 
+const logout = async (req, res) => {
+    await Session.deleteOne({_id: req.session._id});
+    return res.status(httpStatus.OK).json({message: "Signed out"});
+};
+
 const getProfile = async (req, res) => {
     return res.status(httpStatus.OK).json({
         user: {name: req.user.name, username: req.user.username}
@@ -94,4 +99,4 @@ const getAllActivity = async (req, res) => {
     return res.status(httpStatus.OK).json({meetings});
 };
 
-export {login, register, forgotPassword, getProfile, addActivity, getAllActivity};
+export {login, register, logout, forgotPassword, getProfile, addActivity, getAllActivity};
