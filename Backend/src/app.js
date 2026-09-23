@@ -11,6 +11,8 @@ const app = express();
 const server = createServer(app);
 const io = connectToSocket(server)
 
+// Render and similar hosts sit behind one proxy hop; without this every client shares the proxy's IP in the rate limiter.
+app.set("trust proxy", 1);
 app.use(cors(corsOptions));
 app.use(express.json({limit: "50kb"}));
 app.use(express.urlencoded({extended: true, limit: "50kb"}));
