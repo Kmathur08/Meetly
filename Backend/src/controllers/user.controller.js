@@ -90,12 +90,12 @@ const addActivity = async (req, res) => {
     const {meetingcode} = req.body;
     if(!meetingcode) return res.status(httpStatus.BAD_REQUEST).json({message: "Meeting code is required"});
 
-    const meeting = await Meeting.create({user_id: req.user._id.toString(), meetingcode});
+    const meeting = await Meeting.create({user_id: req.user._id, meetingcode});
     return res.status(httpStatus.CREATED).json({meeting});
 };
 
 const getAllActivity = async (req, res) => {
-    const meetings = await Meeting.find({user_id: req.user._id.toString()}).sort({date: -1}).limit(50);
+    const meetings = await Meeting.find({user_id: {$in: [req.user._id, req.user._id.toString()]}}).sort({date: -1}).limit(50);
     return res.status(httpStatus.OK).json({meetings});
 };
 
