@@ -5,7 +5,7 @@ import config from "../config/env.js";
 import {Meeting} from "../models/meeting.model.js";
 import {Session} from "../models/session.model.js";
 import {createToken, hashToken} from "../utils/tokens.js";
-import {isValidName, isValidPassword, isValidUsername, normalizeUsername} from "../utils/validate.js";
+import {isValidName, isValidPassword, isValidRoomCode, isValidUsername, normalizeUsername} from "../utils/validate.js";
 
 
 const login = async (req, res) => {
@@ -87,8 +87,8 @@ const getProfile = async (req, res) => {
 };
 
 const addActivity = async (req, res) => {
-    const {meetingcode} = req.body;
-    if(!meetingcode) return res.status(httpStatus.BAD_REQUEST).json({message: "Meeting code is required"});
+    const meetingcode = typeof req.body.meetingcode === "string" ? req.body.meetingcode.trim() : "";
+    if(!isValidRoomCode(meetingcode)) return res.status(httpStatus.BAD_REQUEST).json({message: "Meeting code must be 3-40 letters, numbers or dashes"});
 
     const meeting = await Meeting.create({user_id: req.user._id, meetingcode});
     return res.status(httpStatus.CREATED).json({meeting});
