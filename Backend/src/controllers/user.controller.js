@@ -65,14 +65,8 @@ const register =  async (req, res) => {
 }
 
 const forgotPassword = async (req, res) => {
-    const {username} = req.body;
-
-    if(!username) {
-        return res.status(httpStatus.BAD_REQUEST).json({message: "Please provide your username"});
-    }
-
-    await User.exists({username});
-    return res.status(httpStatus.OK).json({message: "If an account exists, password reset instructions will be sent shortly."});
+    // No mail provider is wired up yet, so say so plainly instead of promising an email that never arrives.
+    return res.status(httpStatus.NOT_IMPLEMENTED).json({message: "Password reset isn't available yet. Please contact the Meetly team to recover your account."});
 }
 
 const logout = async (req, res) => {
