@@ -31,7 +31,7 @@ export default function LandingPage() {
     showToast(`${device} ${nextState ? 'on' : 'off'}.`)
   }
 
-  const startMeeting = () => showToast('Your meeting room is ready to go.')
+  const startMeeting = () => { window.location.hash = 'meet' }
   const joinMeeting = (event) => {
     event.preventDefault()
     showToast(meetingCode.trim() ? `Joining room ${meetingCode.trim()}...` : 'Enter a meeting code or link first.')

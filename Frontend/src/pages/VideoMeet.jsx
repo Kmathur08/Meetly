@@ -1,126 +1,56 @@
-import React from 'react'
-const server_url = "https://localhost:8080";
+import { useEffect, useRef, useState } from 'react'
 
-var connections = {}
-
-const peerConfigConnections = {
-    "iceServers": [
-        {"urls": "stun:stun.l.google.com:19302"},
-    ]
+function Brand() {
+  return <span className="brand-mark"><i /><i /><i /></span>
 }
 
 export default function VideoMeet() {
+  const videoRef = useRef(null)
+  const streamRef = useRef(null)
+  const [name, setName] = useState('')
+  const [room, setRoom] = useState('')
+  const [joined, setJoined] = useState(false)
+  const [cameraOn, setCameraOn] = useState(true)
+  const [micOn, setMicOn] = useState(true)
+  const [notice, setNotice] = useState('')
 
-    var socketRef = useRef();
-    let socketIdRef = useRef();
-    let localVideoRef = useRef();
-    let [videoAvailable, setVideoAvilable] = useState(true);
-    let [audioAvailable, setAudioAvilable] = useState(true);
+  useEffect(() => {
+    let active = true
+    navigator.mediaDevices?.getUserMedia({ video: true, audio: true })
+      .then((stream) => {
+        if (!active) return stream.getTracks().forEach((track) => track.stop())
+        streamRef.current = stream
+        if (videoRef.current) videoRef.current.srcObject = stream
+      })
+      .catch(() => setNotice('Camera preview is unavailable. You can still join with audio off.'))
 
-    let [video,setVideo] = useState();
-    let [audio,setAudio] = useState();
-    let [screen,setScreen] = useState();
-    let [showModal,setModal] = useState();
-    let [screenAvailable,setScreenAvailable] = useState();
-    let [messages,setMessages] = useState([]);
-    let [message,setMessage] = useState("");;
-    let [newMessages,setNewMessages] = useState(0);
-    let [askForUsername,setAskForUsername] = useState(true);
-    let [username,setUsername] = useState("");
-    let[videos,setVideos] = useState([]);
-
-    const videoRef = useRef([]);
-
-    useEffect(() => {
-        getPermissions();
-    },[])
-
-    useEffect(() => {
-        if(videoAvailable || audioAvailable) {
-            getUserMedia();
-        }
-    },[videoAvailable,audioAvailable]);
-
-    let getMedia = () => {
-        setVideo(videoAvailable);
-        setAudio(audioAvailable);
-        setScreen(screenAvailable);
-        connectToSocketServer();
+    return () => {
+      active = false
+      streamRef.current?.getTracks().forEach((track) => track.stop())
     }
-    let getUserMedia = () => {
-        if(video && videoAvailable || audio && audioAvailable) { 
-            navigator.mediaDevices.getUserMedia({video:video,audio:audio})
-            .then(getUserMediaSuccess)
-            .then((stream) => {})
-            .catch((err) => {
-                console.log("Error while getting user media",err);
-            })
-        } else {
-            try{
-                let tracks = localVideoRef.current.srcObject.getTracks();
-                tracks.forEach((track) => track.stop())
-            } catch(e) {}
-        }
-    }
+  }, [])
 
-    let getUserMediaSuccess = (stream) => {
-    }
+  const toggleTrack = (kind) => {
+    const next = kind === 'video' ? !cameraOn : !micOn
+    if (kind === 'video') setCameraOn(next)
+    else setMicOn(next)
+    streamRef.current?.getTracks()
+      .filter((track) => track.kind === kind)
+      .forEach((track) => { track.enabled = next })
+  }
 
-    let connectToSocketServer = () => {
-        socketRef.current = io.connect(server_url, {secure : false});
-        socketRef.current.on('signal', gotMessageFromServer);
-        socketRef.current.on("connect", () => {
-            socketRef.current.emit("join-call",window.location.href)
-            socketIdRef.current = socketRef.current.id;
-            socketRef.current.on("chat-message",addMessage);
-            socketref.current.on("user-left",userLeft);
-        })
-    }
-    const getPermissions = async () => {
-        try {
-            const videoPrmission = await navigator.mediaDevices.getUserMedia({video:true});
-            if(videoPrmission) setVideoAvilable(true);
-            else setVideoAvilable(false);
+  const joinMeeting = (event) => {
+    event.preventDefault()
+    if (!name.trim()) return setNotice('Add your name before entering the room.')
+    setJoined(true)
+  }
 
-            const audioPermission = await navigator.mediaDevices.getUserMedia({audio:true});
-            if(audioPermission) setAudioAvilable(true);
-            else setAudioAvilable(false);
+  if (joined) return <main className="meeting-room">
+    <header className="meeting-header"><a className="brand" href="#top"><Brand /><span>Meetly</span></a><span className="room-label">Room {room.trim() || 'instant-meeting'}</span><a className="leave-button" href="#top">Leave room</a></header>
+    <section className="meeting-stage"><div className="stage-empty"><span className="stage-avatar">{name.trim().slice(0, 2).toUpperCase()}</span><h1>You are the only one here</h1><p>Share this room link to bring your team in.</p><button className="button button-primary" onClick={() => navigator.clipboard?.writeText(window.location.href)}>Copy room link <span>↗</span></button></div><div className="self-preview"><video ref={videoRef} autoPlay muted playsInline /><span>{name.trim()} · You</span></div></section>
+    <nav className="meeting-controls" aria-label="Meeting controls"><button className={micOn ? '' : 'off'} onClick={() => toggleTrack('audio')} aria-label={micOn ? 'Mute microphone' : 'Unmute microphone'}>{micOn ? '◉' : '⌁'} <span>{micOn ? 'Mute' : 'Unmute'}</span></button><button className={cameraOn ? '' : 'off'} onClick={() => toggleTrack('video')} aria-label={cameraOn ? 'Turn camera off' : 'Turn camera on'}>{cameraOn ? '▣' : '□'} <span>{cameraOn ? 'Camera' : 'Camera off'}</span></button><button onClick={() => setNotice('Screen sharing will be available when another participant joins.')}>▤ <span>Share</span></button><button onClick={() => setNotice('Chat is ready for this room.')}>☷ <span>Chat</span></button></nav>
+    <div className={`meeting-notice${notice ? ' visible' : ''}`}>{notice}</div>
+  </main>
 
-            if(navigator.mediaDevices.getDisplayMedia) setScreenAvailable(true);
-            else setScreenAvailable(false);
-        
-            if(videoAvailable || audioAvailable) {
-                const userMediaStream  = await navigator.mediaDevices.getUserMedia({video:videoAvailable,audio:audioAvailable});
-            }
-
-            if(userMediaStream) {
-                window.localStream = userMediaStream;
-
-                if(localVideoRef.current) {
-                    localVideoRef.current.srcObject = userMediaStream;
-                }
-            }
-        } catch (e) {
-            console.log("Error while getting permissions",e);
-        }
-    }
-
-  return (
-    <div>
-        {askForUsername === true ? 
-            <div>
-                <h2> Enter into the Meeting</h2>
-                <TextField id = "outlined-basic" value = {username} label = "Enter your name" variant = "outlined" onChange={(e) => setUsername(e.target.value)} />
-                <Button variant="contained" onClick={conect}>
-                Connect
-                </Button>
-
-                <div>
-                    <video ref={localVideoRef} autoPlay muted ></video>
-                </div>
-            </div> :
-            <></>
-        }
-    </div>
-  )
+  return <main className="meeting-lobby"><header className="meeting-header"><a className="brand" href="#top"><Brand /><span>Meetly</span></a><a className="back-home" href="#top">Back to home <span>↗</span></a></header><section className="lobby-content"><div className="lobby-copy"><span className="eyebrow">MEETLY MEETING ROOM</span><h1>Ready when<br /><em>you are.</em></h1><p>Join a clear, focused conversation from your browser. No downloads, no distractions.</p><form className="join-card" onSubmit={joinMeeting}><label>Your name<input value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. Alex Morgan" autoComplete="name" /></label><label>Meeting code <span className="optional">optional</span><input value={room} onChange={(event) => setRoom(event.target.value)} placeholder="Paste a room code or link" /></label><div className="lobby-actions"><button className="button button-primary" type="submit">Enter meeting <span>→</span></button><button className={`device-button${cameraOn ? '' : ' off'}`} type="button" onClick={() => toggleTrack('video')}>{cameraOn ? '▣ Camera on' : '□ Camera off'}</button><button className={`device-button${micOn ? '' : ' off'}`} type="button" onClick={() => toggleTrack('audio')}>{micOn ? '◉ Mic on' : '⌁ Mic off'}</button></div></form>{notice && <p className="meeting-notice visible">{notice}</p>}</div><div className="preview-panel"><div className="preview-heading"><span>Preview</span><span className="secure-label">● Ready to connect</span></div><div className="preview-frame"><video ref={videoRef} autoPlay muted playsInline /><div className="preview-name">{name.trim() || 'Your preview'}</div><span className="preview-badge">{cameraOn ? 'HD' : 'Camera off'}</span></div><div className="preview-foot"><span><b>⌁</b> Browser-based</span><span><b>✓</b> Private by default</span></div></div></section></main>
 }

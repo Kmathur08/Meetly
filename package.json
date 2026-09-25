@@ -1,0 +1,10 @@
+{
+  "name": "meetly",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix Frontend run build",
+    "dev": "npm --prefix Frontend run dev",
+    "frontend": "npm --prefix Frontend run dev",
+    "backend": "npm --prefix Backend run dev"
+  }
+}

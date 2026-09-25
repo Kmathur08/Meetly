@@ -46,7 +46,11 @@ export default function Authentication({ initialMode = 'signin' }) {
       const data = await response.json()
       if (!response.ok) throw new Error(data.message || 'Something went wrong. Please try again.')
 
-      if (mode === 'signin' && data.token) localStorage.setItem('meetly_token', data.token)
+      if (mode === 'signin' && data.token) {
+        localStorage.setItem('meetly_token', data.token)
+        window.location.hash = 'meet'
+        return
+      }
       setStatus({ type: 'success', message: mode === 'forgot-password' ? data.message : data.message || 'Welcome to Meetly.' })
       if (mode === 'signup') window.setTimeout(() => changeMode('signin'), 900)
     } catch (error) {
