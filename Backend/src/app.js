@@ -16,6 +16,10 @@ app.set("trust proxy", 1);
 app.use(cors(corsOptions));
 app.use(express.json({limit: "50kb"}));
 app.use(express.urlencoded({extended: true, limit: "50kb"}));
+app.get("/health", (req, res) => {
+    const dbReady = mongoose.connection.readyState === 1;
+    res.status(dbReady ? 200 : 503).json({status: dbReady ? "ok" : "degraded"});
+});
 app.use("/api/v1/users", userRoutes);
 app.use(notFound);
 app.use(errorHandler);
