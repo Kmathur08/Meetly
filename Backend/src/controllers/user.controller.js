@@ -90,6 +90,10 @@ const addActivity = async (req, res) => {
     const meetingcode = typeof req.body.meetingcode === "string" ? req.body.meetingcode.trim() : "";
     if(!isValidRoomCode(meetingcode)) return res.status(httpStatus.BAD_REQUEST).json({message: "Meeting code must be 3-40 letters, numbers or dashes"});
 
+    // Rejoining the same room after a dropped connection shouldn't fill the history with duplicates.
+    const recent = await Meeting.findOne({user_id: req.user._id, meetingcode, date: {$gt: new Date(Date.now() - 30 * 60 * 1000)}});
+    if(recent) return res.status(httpStatus.OK).json({meeting: recent});
+
     const meeting = await Meeting.create({user_id: req.user._id, meetingcode});
     return res.status(httpStatus.CREATED).json({meeting});
 };
