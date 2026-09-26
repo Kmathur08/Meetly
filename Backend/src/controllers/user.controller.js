@@ -2,6 +2,7 @@ import httpStatus from "http-status";
 import bcrypt from "bcrypt";
 import {User} from "../models/users.models.js";
 import crypto from "crypto"; 
+import {Meeting} from "../models/meeting.model.js";
 
 
 const login = async (req, res) => {
@@ -71,4 +72,23 @@ const forgotPassword = async (req, res) => {
     return res.status(httpStatus.OK).json({message: "If an account exists, password reset instructions will be sent shortly."});
 }
 
-export {login, register, forgotPassword};
+const getProfile = async (req, res) => {
+    return res.status(httpStatus.OK).json({
+        user: {name: req.user.name, username: req.user.username}
+    });
+};
+
+const addActivity = async (req, res) => {
+    const {meetingcode} = req.body;
+    if(!meetingcode) return res.status(httpStatus.BAD_REQUEST).json({message: "Meeting code is required"});
+
+    const meeting = await Meeting.create({user_id: req.user._id.toString(), meetingcode});
+    return res.status(httpStatus.CREATED).json({meeting});
+};
+
+const getAllActivity = async (req, res) => {
+    const meetings = await Meeting.find({user_id: req.user._id.toString()}).sort({date: -1}).limit(50);
+    return res.status(httpStatus.OK).json({meetings});
+};
+
+export {login, register, forgotPassword, getProfile, addActivity, getAllActivity};

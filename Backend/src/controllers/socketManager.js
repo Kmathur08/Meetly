@@ -36,8 +36,8 @@ const connectToSocket = (server) => {
             }
         });
 
-        socket.on("signal", (toId,message) => {
-            to.to(toId).emit("signal", socket.id, message)
+        socket.on("signal", (toId, signalMessage) => {
+            io.to(toId).emit("signal", socket.id, signalMessage)
         });
 
         socket.on("chat-message",(data,sender) => {
@@ -64,7 +64,7 @@ const connectToSocket = (server) => {
             var diffTime = Math.abs((timeonline[socket.id] - new Date()))
 
             var key;
-            for(const [k,v] of JSON.parse(JSON.stringify(Objects.entries(connections)))) {
+            for(const [k,v] of Object.entries(connections)) {
                 for(let i=0;i<v.length;++i) {
                     if(v[i] === socket.id) {
                         key = k;
@@ -73,9 +73,6 @@ const connectToSocket = (server) => {
                             io.to(connections[key][j]).emit("user-left", socket.id);
                         }
 
-                        var index = connections[key].indexOf(socket.id);
-                        connections[key].splice(index,1);
-                        
                         if(connections[key].length === 0) {
                             delete connections[key];
                         }
@@ -83,6 +80,7 @@ const connectToSocket = (server) => {
                     }
                 }   
             }
+            delete timeonline[socket.id];
         });
     });
 

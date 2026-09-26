@@ -48,7 +48,7 @@ export default function Authentication({ initialMode = 'signin' }) {
 
       if (mode === 'signin' && data.token) {
         localStorage.setItem('meetly_token', data.token)
-        window.location.hash = 'meet'
+        window.location.hash = 'home'
         return
       }
       setStatus({ type: 'success', message: mode === 'forgot-password' ? data.message : data.message || 'Welcome to Meetly.' })
