@@ -36,6 +36,20 @@ const start = async () => {
     });
 }
 
+const shutdown = (signal) => {
+    console.log(`${signal} received, closing connections`);
+    io.close();
+    server.close(async () => {
+        await mongoose.disconnect();
+        process.exit(0);
+    });
+    // Don't hang forever if a client keeps a connection open.
+    setTimeout(() => process.exit(1), 10000).unref();
+};
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
+
 start().catch((error) => {
     console.error("Unable to start backend:", error.message);
     process.exit(1);
