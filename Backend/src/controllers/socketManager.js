@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import {isAllowedOrigin} from "../config/env.js";
+import {findSession} from "../middleware/auth.js";
 
 let connections = {}
 let message = {}
@@ -12,6 +13,17 @@ const connectToSocket = (server) => {
             methods: ["GET", "POST"]
         },
         maxHttpBufferSize: 64 * 1024
+    });
+
+    io.use(async (socket, next) => {
+        try {
+            const session = await findSession(socket.handshake.auth?.token);
+            if(!session) return next(new Error("unauthorized"));
+            socket.data.user = {id: session.user._id.toString(), name: session.user.name};
+            next();
+        } catch {
+            next(new Error("unauthorized"));
+        }
     });
 
     io.on("connection", (socket) => {
