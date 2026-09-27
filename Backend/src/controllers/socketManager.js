@@ -1,4 +1,5 @@
 import { Server } from "socket.io";
+import {isAllowedOrigin} from "../config/env.js";
 
 let connections = {}
 let message = {}
@@ -6,12 +7,11 @@ let timeonline = {}
 
 const connectToSocket = (server) => {
     const io = new Server(server, {
-        cors:{
-            origin: "*",
-            methods: ["GET", "POST"],
-            allowHeaders: ["*"],
-            credentials: true
-        }
+        cors: {
+            origin: (origin, callback) => callback(null, isAllowedOrigin(origin)),
+            methods: ["GET", "POST"]
+        },
+        maxHttpBufferSize: 64 * 1024
     });
 
     io.on("connection", (socket) => {
