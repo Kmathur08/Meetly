@@ -9,7 +9,7 @@ export const readBearerToken = (header) => {
 
 // Resolves a raw token to its session and user; shared by the REST guard and the socket handshake.
 export const findSession = async (token) => {
-    if(!token) return null;
+    if(typeof token !== "string" || !/^[a-f0-9]{64}$/.test(token)) return null;
     const session = await Session.findOne({tokenHash: hashToken(token), expiresAt: {$gt: new Date()}}).populate("user");
     return session?.user ? session : null;
 };

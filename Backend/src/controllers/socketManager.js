@@ -1,10 +1,8 @@
 import { Server } from "socket.io";
 import {isAllowedOrigin} from "../config/env.js";
 import {findSession} from "../middleware/auth.js";
-
-let connections = {}
-let message = {}
-let timeonline = {}
+import {isValidRoomCode} from "../utils/validate.js";
+import {createRoomRegistry} from "./rooms.js";
 
 const connectToSocket = (server) => {
     const io = new Server(server, {
@@ -14,6 +12,7 @@ const connectToSocket = (server) => {
         },
         maxHttpBufferSize: 64 * 1024
     });
+    const rooms = createRoomRegistry();
 
     io.use(async (socket, next) => {
         try {
@@ -26,74 +25,42 @@ const connectToSocket = (server) => {
         }
     });
 
+    const leaveCurrentRoom = (socket) => {
+        const left = rooms.leave(socket.id);
+        if(!left) return;
+        socket.leave(left.roomCode);
+        socket.to(left.roomCode).emit("peer-left", socket.id);
+    };
+
     io.on("connection", (socket) => {
+        const reply = (ack, payload) => typeof ack === "function" && ack(payload);
 
-        socket.on("Accept-call", (path) => {
+        socket.on("join-room", (roomCode, ack) => {
+            if(!isValidRoomCode(roomCode)) return reply(ack, {ok: false, error: "That meeting code isn't valid."});
 
-            if(connections[path] === undefined) {
-                connections[path] = []
-            }
-            connections[path].push(socket.id);
+            const participant = {id: socket.id, name: socket.data.user.name};
+            const result = rooms.join(roomCode, participant);
+            if(!result.ok) return reply(ack, {ok: false, error: result.error});
 
-            timeonline[socket.id] = new Date();
-
-            for(let i=0;i<connections[path].length;i++) {
-                io.to(connections[path][i]).emit("user-joined", socket.id, connections[path]);
-            }
-
-            if(message[path] !== undefined) {
-                for(let i=0;i<message[path].length;++i) {
-                    io.to(socket.id).emit("chat-message", message[path][i]['data'], message[path][i]['sender'], message[path][i]['socket-id-sender']);
-                }
-            }
+            socket.join(roomCode);
+            socket.to(roomCode).emit("peer-joined", participant);
+            reply(ack, {ok: true, self: participant, peers: result.peers, messages: result.messages});
         });
 
         socket.on("signal", (toId, signalMessage) => {
-            io.to(toId).emit("signal", socket.id, signalMessage)
+            io.to(toId).emit("signal", socket.id, signalMessage);
         });
 
-        socket.on("chat-message",(data,sender) => {
-            const [matchingroom, found] = Object.entries(connections).reduce(([room,isfound], [roomKey, roomvalue]) => {
-                if(!isfound && roomvalue.includes(socket.id)) {
-                    return [roomKey, true];
-                }
-                return [room, isfound];
-        }, ['',false]);
+        socket.on("chat-message", (text) => {
+            const roomCode = rooms.roomOf(socket.id);
+            if(roomCode === undefined || typeof text !== "string") return;
 
-        if(found === true) {
-            if(message[matchingroom] === undefined) {
-                message[matchingroom] = []
-            }
-            message[matchingroom].push({'sender': sender, "data" : data, "socket-id-sender": socket.id});
-
-            connections[matchingroom].forEach((element) => {
-                io.to(element).emit("chat-message", data, sender, socket.id);       
-            });
-        }   
+            const message = {from: socket.id, sender: socket.data.user.name, text, at: Date.now()};
+            rooms.addMessage(roomCode, message);
+            io.to(roomCode).emit("chat-message", message);
         });
 
-        socket.on("disconnect", () => {
-            var diffTime = Math.abs((timeonline[socket.id] - new Date()))
-
-            var key;
-            for(const [k,v] of Object.entries(connections)) {
-                for(let i=0;i<v.length;++i) {
-                    if(v[i] === socket.id) {
-                        key = k;
-                        v.splice(i,1);
-                        for(let j=0;j<connections[key].length;++j) {
-                            io.to(connections[key][j]).emit("user-left", socket.id);
-                        }
-
-                        if(connections[key].length === 0) {
-                            delete connections[key];
-                        }
-                    
-                    }
-                }   
-            }
-            delete timeonline[socket.id];
-        });
+        socket.on("disconnect", () => leaveCurrentRoom(socket));
     });
 
     return io;
