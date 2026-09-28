@@ -1,5 +1,5 @@
 // Tracks who is in which meeting room. Kept free of socket.io so it can be unit tested.
-export const createRoomRegistry = () => {
+export const createRoomRegistry = ({maxParticipants = 6} = {}) => {
     const rooms = new Map();
     const membership = new Map();
 
@@ -7,6 +7,11 @@ export const createRoomRegistry = () => {
 
     const join = (roomCode, participant) => {
         if(membership.has(participant.id)) leave(participant.id);
+
+        // Every call is a full mesh, so each extra person adds an upload stream for everyone else.
+        if((rooms.get(roomCode)?.members.size || 0) >= maxParticipants) {
+            return {ok: false, error: `This room is full (${maxParticipants} people max).`};
+        }
 
         if(!rooms.has(roomCode)) rooms.set(roomCode, {members: new Map(), messages: []});
         const room = rooms.get(roomCode);
