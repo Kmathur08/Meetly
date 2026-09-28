@@ -48,6 +48,8 @@ const connectToSocket = (server) => {
         });
 
         socket.on("signal", (toId, signalMessage) => {
+            // Only relay between people in the same room, so a socket can't message arbitrary users.
+            if(typeof toId !== "string" || !rooms.sameRoom(socket.id, toId)) return;
             io.to(toId).emit("signal", socket.id, signalMessage);
         });
 
