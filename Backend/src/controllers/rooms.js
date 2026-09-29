@@ -1,5 +1,5 @@
 // Tracks who is in which meeting room. Kept free of socket.io so it can be unit tested.
-export const createRoomRegistry = ({maxParticipants = 6} = {}) => {
+export const createRoomRegistry = ({maxParticipants = 6, maxMessages = 100} = {}) => {
     const rooms = new Map();
     const membership = new Map();
 
@@ -45,6 +45,8 @@ export const createRoomRegistry = ({maxParticipants = 6} = {}) => {
         const room = rooms.get(roomCode);
         if(!room) return;
         room.messages.push(message);
+        // Only recent history is replayed to late joiners; older messages would just grow memory forever.
+        if(room.messages.length > maxMessages) room.messages.splice(0, room.messages.length - maxMessages);
     };
 
     const sameRoom = (a, b) => membership.has(a) && membership.get(a) === membership.get(b);
