@@ -4,6 +4,8 @@ import {findSession} from "../middleware/auth.js";
 import {isValidRoomCode} from "../utils/validate.js";
 import {createRoomRegistry} from "./rooms.js";
 
+const MAX_CHAT_LENGTH = 500;
+
 const connectToSocket = (server) => {
     const io = new Server(server, {
         cors: {
@@ -53,9 +55,12 @@ const connectToSocket = (server) => {
             io.to(toId).emit("signal", socket.id, signalMessage);
         });
 
-        socket.on("chat-message", (text) => {
+        socket.on("chat-message", (rawText) => {
             const roomCode = rooms.roomOf(socket.id);
-            if(roomCode === undefined || typeof text !== "string") return;
+            if(roomCode === undefined || typeof rawText !== "string") return;
+
+            const text = rawText.trim().slice(0, MAX_CHAT_LENGTH);
+            if(!text) return;
 
             const message = {from: socket.id, sender: socket.data.user.name, text, at: Date.now()};
             rooms.addMessage(roomCode, message);
