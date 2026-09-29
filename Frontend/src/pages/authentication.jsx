@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import './authentication.css'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1/users'
+const API_URL = import.meta.env.VITE_API_URL
 
 function Brand() {
   return <span className="brand-mark"><i /><i /><i /></span>

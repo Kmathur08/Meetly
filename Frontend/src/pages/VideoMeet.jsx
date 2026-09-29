@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
 import './meeting.css'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1/users'
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:8080'
+const API_URL = import.meta.env.VITE_API_URL
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL
 
 function Brand() {
   return <span className="brand-mark"><i /><i /><i /></span>
