@@ -36,6 +36,17 @@ const connectToSocket = (server) => {
 
     io.on("connection", (socket) => {
         const reply = (ack, payload) => typeof ack === "function" && ack(payload);
+        let chatWindowStart = 0;
+        let chatCount = 0;
+        const chatAllowed = () => {
+            const now = Date.now();
+            if(now - chatWindowStart > 10000) {
+                chatWindowStart = now;
+                chatCount = 0;
+            }
+            chatCount += 1;
+            return chatCount <= 10;
+        };
 
         socket.on("join-room", (roomCode, ack) => {
             if(!isValidRoomCode(roomCode)) return reply(ack, {ok: false, error: "That meeting code isn't valid."});
@@ -57,7 +68,7 @@ const connectToSocket = (server) => {
 
         socket.on("chat-message", (rawText) => {
             const roomCode = rooms.roomOf(socket.id);
-            if(roomCode === undefined || typeof rawText !== "string") return;
+            if(roomCode === undefined || typeof rawText !== "string" || !chatAllowed()) return;
 
             const text = rawText.trim().slice(0, MAX_CHAT_LENGTH);
             if(!text) return;
