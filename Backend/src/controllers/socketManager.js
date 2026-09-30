@@ -78,6 +78,18 @@ const connectToSocket = (server) => {
             io.to(roomCode).emit("chat-message", message);
         });
 
+        socket.on("media-state", (state) => {
+            const roomCode = rooms.roomOf(socket.id);
+            if(roomCode === undefined || typeof state !== "object" || state === null) return;
+            socket.to(roomCode).emit("peer-media", socket.id, {
+                audio: Boolean(state.audio),
+                video: Boolean(state.video),
+                screen: Boolean(state.screen)
+            });
+        });
+
+        socket.on("leave-room", () => leaveCurrentRoom(socket));
+
         socket.on("disconnect", () => leaveCurrentRoom(socket));
     });
 
