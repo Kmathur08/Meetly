@@ -1,7 +1,7 @@
 import httpStatus from "http-status";
 import bcrypt from "bcrypt";
 import {User} from "../models/users.models.js";
-import config from "../config/env.js";
+import config, {iceServers} from "../config/env.js";
 import {Meeting} from "../models/meeting.model.js";
 import {Session} from "../models/session.model.js";
 import {createToken, hashToken} from "../utils/tokens.js";
@@ -97,4 +97,8 @@ const getAllActivity = async (req, res) => {
     return res.status(httpStatus.OK).json({meetings});
 };
 
-export {login, register, logout, forgotPassword, getProfile, addActivity, getAllActivity};
+const getIceServers = async (req, res) => {
+    return res.status(httpStatus.OK).json({iceServers: iceServers()});
+};
+
+export {getIceServers, login, register, logout, forgotPassword, getProfile, addActivity, getAllActivity};

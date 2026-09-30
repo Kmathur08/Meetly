@@ -1,5 +1,5 @@
 import {Router} from "express";
-import {login, register, logout, forgotPassword, getProfile, addActivity, getAllActivity} from "../controllers/user.controller.js";
+import {getIceServers, login, register, logout, forgotPassword, getProfile, addActivity, getAllActivity} from "../controllers/user.controller.js";
 import {authGuard} from "../middleware/auth.js";
 import {rateLimit} from "../middleware/rateLimit.js";
 
@@ -14,5 +14,6 @@ router.route("/forgot-password").post(authLimiter, forgotPassword);
 router.route("/me").get(authGuard, getProfile);
 router.route("/add_to_activity").post(authGuard, addActivity);
 router.route("/get_all_activity").get(authGuard, getAllActivity);
+router.route("/ice-servers").get(authGuard, getIceServers);
 
 export default router;
