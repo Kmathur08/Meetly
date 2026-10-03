@@ -1,11 +1,8 @@
 import { useState } from 'react'
 import './authentication.css'
+import Brand from '../components/Brand'
 
 const API_URL = import.meta.env.VITE_API_URL
-
-function Brand() {
-  return <span className="brand-mark"><i /><i /><i /></span>
-}
 
 export default function Authentication({ initialMode = 'signin' }) {
   const [mode, setMode] = useState(initialMode)

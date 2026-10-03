@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import Brand from '../components/Brand'
 
 const featureCards = [
   ['≋', 'HD Video & Spatial Audio', 'Studio-quality 1080p60 video paired with neural noise suppression and acoustic echo isolation.', '✓ Dolby-grade spatial engine'],
@@ -6,10 +7,6 @@ const featureCards = [
   ['☷', 'Real-Time In-Meeting Chat', 'Live threaded conversations, emoji reactions, code previews, and easy file exchange.', 'ϟ Instant drag-and-drop files'],
   ['⌑', 'Secure Meeting Rooms', 'End-to-end encryption, waiting rooms, passcode locks, and host-level permissions by default.', '✓ SOC2 Type II & HIPAA ready'],
 ]
-
-function Brand() {
-  return <span className="brand-mark"><i /><i /><i /></span>
-}
 
 export default function LandingPage() {
   const [toast, setToast] = useState('')

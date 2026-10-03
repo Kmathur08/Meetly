@@ -1,13 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
 import './meeting.css'
+import Brand from '../components/Brand'
 
 const API_URL = import.meta.env.VITE_API_URL
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL
-
-function Brand() {
-  return <span className="brand-mark"><i /><i /><i /></span>
-}
 
 export default function VideoMeet() {
   const videoRef = useRef(null)
