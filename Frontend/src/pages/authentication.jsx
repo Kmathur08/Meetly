@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import './authentication.css'
 import Brand from '../components/Brand'
-
-const API_URL = import.meta.env.VITE_API_URL
+import { api, setToken } from '../lib/api'
 
 export default function Authentication({ initialMode = 'signin' }) {
   const [mode, setMode] = useState(initialMode)
@@ -35,23 +34,20 @@ export default function Authentication({ initialMode = 'signin' }) {
         : { username: form.username }
 
     try {
-      const response = await fetch(`${API_URL}/${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.message || 'Something went wrong. Please try again.')
+      const data = await api(endpoint, { method: 'POST', body, auth: false })
 
       if (mode === 'signin' && data.token) {
-        localStorage.setItem('meetly_token', data.token)
-        window.location.hash = 'home'
+        setToken(data.token)
+        // Send people back to the meeting link they opened before signing in.
+        const next = sessionStorage.getItem('meetly_next')
+        sessionStorage.removeItem('meetly_next')
+        window.location.hash = next || 'home'
         return
       }
-      setStatus({ type: 'success', message: mode === 'forgot-password' ? data.message : data.message || 'Welcome to Meetly.' })
+      setStatus({ type: 'success', message: data.message || 'Welcome to Meetly.' })
       if (mode === 'signup') window.setTimeout(() => changeMode('signin'), 900)
     } catch (error) {
-      setStatus({ type: 'error', message: error.message === 'Failed to fetch' ? 'Unable to reach Meetly. Check that the backend is running.' : error.message })
+      setStatus({ type: 'error', message: error.message })
     } finally {
       setLoading(false)
     }
