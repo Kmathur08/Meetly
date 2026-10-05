@@ -2,31 +2,27 @@ import { useEffect, useState } from 'react'
 import { withAuthGuard } from '../utils/authGuard'
 import './home.css'
 import Brand from '../components/Brand'
-
-const API_URL = import.meta.env.VITE_API_URL
+import { api, clearToken } from '../lib/api'
 
 function Home({ user }) {
   const [meetings, setMeetings] = useState([])
   const [meetingCode, setMeetingCode] = useState('')
 
   useEffect(() => {
-    fetch(`${API_URL}/get_all_activity`, { headers: { Authorization: `Bearer ${localStorage.getItem('meetly_token')}` } })
-      .then((response) => response.ok ? response.json() : { meetings: [] })
+    api('get_all_activity')
       .then((data) => setMeetings(data.meetings || []))
+      .catch(() => setMeetings([]))
   }, [])
 
-  const startMeeting = async () => {
+  // The meeting page records the visit itself, so this only navigates.
+  const startMeeting = () => {
     const code = meetingCode.trim() || Math.random().toString(36).slice(2, 8)
-    await fetch(`${API_URL}/add_to_activity`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('meetly_token')}` },
-      body: JSON.stringify({ meetingcode: code }),
-    })
     window.location.hash = `meet/${code}`
   }
 
-  const signOut = () => {
-    localStorage.removeItem('meetly_token')
+  const signOut = async () => {
+    await api('logout', { method: 'POST' }).catch(() => {})
+    clearToken()
     window.location.hash = 'top'
   }
 
