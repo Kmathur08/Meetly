@@ -3,10 +3,10 @@ import Brand from '../components/Brand'
 import { createRoomCode, parseRoomCode } from '../lib/roomCode'
 
 const featureCards = [
-  ['≋', 'HD Video & Spatial Audio', 'Studio-quality 1080p60 video paired with neural noise suppression and acoustic echo isolation.', '✓ Dolby-grade spatial engine'],
-  ['▧', 'One-Click Screen Sharing', 'Stream browser tabs, standalone apps, or multi-monitor presentations at 60fps.', 'ϟ Optimized for 60fps review'],
-  ['☷', 'Real-Time In-Meeting Chat', 'Live threaded conversations, emoji reactions, code previews, and easy file exchange.', 'ϟ Instant drag-and-drop files'],
-  ['⌑', 'Secure Meeting Rooms', 'End-to-end encryption, waiting rooms, passcode locks, and host-level permissions by default.', '✓ SOC2 Type II & HIPAA ready'],
+  ['≋', 'Video & Audio in the Browser', 'Peer-to-peer WebRTC calls for up to six people, with echo cancellation and noise suppression from your browser.', '✓ No downloads or plugins'],
+  ['▧', 'One-Click Screen Sharing', 'Share a tab, a window or your whole screen with everyone in the room, then switch back to your camera.', 'ϟ Works in Chrome, Edge and Firefox'],
+  ['☷', 'Real-Time In-Meeting Chat', 'Send messages to the room while you talk. People who join late see the recent conversation.', 'ϟ Delivered instantly'],
+  ['⌑', 'Private Meeting Rooms', 'Rooms use hard-to-guess codes and only signed-in members can join. Media flows directly between participants.', '✓ Encrypted in transit (DTLS-SRTP)'],
 ]
 
 export default function LandingPage() {
@@ -53,20 +53,20 @@ export default function LandingPage() {
     <main id="top">
       <section className="hero section-shell">
         <div className="glow" />
-        <a className="announcement" href="#features"><span className="pulse-dot" /><span>Meetly 2.0 is live · Crystal-clear HD video with zero downloads</span><span className="arrow">→</span></a>
+        <a className="announcement" href="#features"><span className="pulse-dot" /><span>Video calls, screen sharing and chat · Zero downloads</span><span className="arrow">→</span></a>
         <h1>Meet without <em>limits.</em></h1>
-        <p className="hero-copy">Effortless, ultra-low-latency video meetings built for fast-moving teams. Real-time AI transcription, spatial audio, and one-click browser access.</p>
+        <p className="hero-copy">Simple video meetings for small teams. Start a room, share the link, and talk face to face right in your browser.</p>
         <div className="hero-actions" id="start"><button className="button button-primary" onClick={startMeeting}>Start a free meeting <span>→</span></button><form className="join-form" onSubmit={joinMeeting}><span className="keyboard-icon">⌘</span><input aria-label="Meeting code or link" placeholder="Enter meeting code or link" value={meetingCode} onChange={(event) => setMeetingCode(event.target.value)} /><button type="submit">Join</button></form></div>
-        <div className="trust-row"><span>✓ No credit card required</span><b>·</b><span>◷ Free up to 45 mins</span><b>·</b><span>ϟ Instant browser setup</span></div>
+        <div className="trust-row"><span>✓ No credit card required</span><b>·</b><span>◷ Up to 6 people per room</span><b>·</b><span>ϟ Instant browser setup</span></div>
       </section>
 
-      <section className="metrics"><div className="section-shell metric-grid"><div><strong>99.99%</strong><h3>Uptime SLA Guaranteed</h3><p>Global data centers keep crucial client connections moving.</p></div><div><strong>&lt; 40ms</strong><h3>Ultra-Low Latency</h3><p>Edge-routed WebRTC delivery creates lifelike conversations.</p></div><div><strong>Zero Install</strong><h3>Native In-Browser Simplicity</h3><p>Open the link and go live without apps or extensions.</p></div></div></section>
+      <section className="metrics"><div className="section-shell metric-grid"><div><strong>Peer-to-peer</strong><h3>Direct Connections</h3><p>Video and audio go straight between participants instead of through a media server.</p></div><div><strong>WebRTC</strong><h3>Built on Open Standards</h3><p>The same browser technology behind most modern video calling.</p></div><div><strong>Zero Install</strong><h3>Native In-Browser Simplicity</h3><p>Open the link and go live without apps or extensions.</p></div></div></section>
 
       <section className="features section-shell" id="features"><div className="section-heading"><span className="eyebrow">ENGINEERED FOR ACCURACY</span><h2>Everything high-performing teams demand</h2><p>Stripped of legacy enterprise clutter. Built strictly for clarity, speed, and real-time synchronicity.</p></div><div className="feature-grid">{featureCards.map(([icon, title, description, footer]) => <article key={title}><div className="feature-icon">{icon}</div><h3>{title}</h3><p>{description}</p><footer><span>{footer}</span><b>→</b></footer></article>)}</div></section>
 
-      <section className="cta section-shell" id="about"><div><span className="eyebrow">BUILT FOR THE WAY TEAMS WORK NOW</span><h2>Ready to connect without boundaries?</h2><p>Jump into your first high-definition meeting in under 10 seconds. No setup fees, no software installations required.</p><div className="cta-actions"><button className="button button-light" onClick={startMeeting}>Start a free meeting <span>→</span></button><a href="#pricing">Schedule for later →</a></div></div></section>
+      <section className="cta section-shell" id="about"><div><span className="eyebrow">BUILT FOR THE WAY TEAMS WORK NOW</span><h2>Ready to connect without boundaries?</h2><p>Create a free account, start a room and share the link. No software to install.</p><div className="cta-actions"><button className="button button-light" onClick={startMeeting}>Start a free meeting <span>→</span></button><a href="#pricing">Schedule for later →</a></div></div></section>
     </main>
-    <footer><div className="footer-inner"><a className="brand" href="#top"><Brand /><span>Meetly</span></a><nav><a href="#features">Features</a><a href="#solutions">Solutions</a><a href="#pricing">Pricing</a><a href="#about">About</a><a href="#privacy">Privacy</a><a href="#terms">Terms</a></nav></div><p>© 2024 Meetly, Inc. All rights reserved. Atmospheric, high-performance teleconferencing built for collaborative teams.</p></footer>
+    <footer><div className="footer-inner"><a className="brand" href="#top"><Brand /><span>Meetly</span></a><nav><a href="#features">Features</a><a href="#solutions">Solutions</a><a href="#pricing">Pricing</a><a href="#about">About</a><a href="#privacy">Privacy</a><a href="#terms">Terms</a></nav></div><p>© 2026 Meetly. Video meetings built for small, collaborative teams.</p></footer>
     <div className={`toast${toast ? ' show' : ''}`} role="status" aria-live="polite">{toast}</div>
   </>
 }
