@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Brand from '../components/Brand'
+import { createRoomCode, parseRoomCode } from '../lib/roomCode'
 
 const featureCards = [
   ['≋', 'HD Video & Spatial Audio', 'Studio-quality 1080p60 video paired with neural noise suppression and acoustic echo isolation.', '✓ Dolby-grade spatial engine'],
@@ -28,10 +29,13 @@ export default function LandingPage() {
     showToast(`${device} ${nextState ? 'on' : 'off'}.`)
   }
 
-  const startMeeting = () => { window.location.hash = 'meet' }
+  // The meeting page asks for sign-in when needed and comes back here afterwards.
+  const startMeeting = () => { window.location.hash = `meet/${createRoomCode()}` }
   const joinMeeting = (event) => {
     event.preventDefault()
-    showToast(meetingCode.trim() ? `Joining room ${meetingCode.trim()}...` : 'Enter a meeting code or link first.')
+    const code = parseRoomCode(meetingCode)
+    if (!code) return showToast(meetingCode.trim() ? 'That meeting code or link doesn\'t look right.' : 'Enter a meeting code or link first.')
+    window.location.hash = `meet/${code}`
   }
 
   return <>
