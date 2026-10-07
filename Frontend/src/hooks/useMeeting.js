@@ -141,9 +141,11 @@ export default function useMeeting({ roomCode, localStream, enabled }) {
     socket.on('signal', handleSignal)
     socket.on('chat-message', (message) => setMessages((current) => [...current, message]))
 
+    // Connect only once the TURN/STUN list is known, so the first peer connections already use it.
     api('ice-servers')
       .then((data) => { if (data.iceServers?.length) iceServers = data.iceServers })
       .catch(() => {})
+      .finally(() => { if (!cancelled) socket.connect() })
 
     return () => {
       cancelled = true
