@@ -5,6 +5,7 @@ import { createRoomCode, parseRoomCode } from '../lib/roomCode'
 import { withAuthGuard } from '../utils/authGuard'
 import useLocalMedia from '../hooks/useLocalMedia'
 import useMeeting from '../hooks/useMeeting'
+import useScreenShare from '../hooks/useScreenShare'
 import Lobby from './meeting/Lobby'
 import Room from './meeting/Room'
 
@@ -12,7 +13,16 @@ function VideoMeet({ user }) {
   const roomCode = parseRoomCode(window.location.hash)
   const [joined, setJoined] = useState(false)
   const media = useLocalMedia()
-  const meeting = useMeeting({ roomCode, localStream: media.stream, enabled: joined && Boolean(roomCode) })
+  const [screenTrackHandler, setScreenTrackHandler] = useState(() => () => {})
+  const screen = useScreenShare(screenTrackHandler)
+  const meeting = useMeeting({
+    roomCode,
+    localStream: media.stream,
+    enabled: joined && Boolean(roomCode),
+    mediaState: { audio: media.micOn, video: media.cameraOn, screen: screen.sharing },
+  })
+
+  useEffect(() => { setScreenTrackHandler(() => meeting.setScreenTrack) }, [meeting.setScreenTrack])
 
   useEffect(() => {
     // A bare #meet (or a broken code) gets a fresh room so there is always something to share.
@@ -30,7 +40,7 @@ function VideoMeet({ user }) {
   if (joined && meeting.status === 'error') {
     return <main className="guard-loading">{meeting.error} <a href="#home">Back to home</a></main>
   }
-  if (joined) return <Room user={user} roomCode={roomCode} media={media} meeting={meeting} onLeave={leave} />
+  if (joined) return <Room user={user} roomCode={roomCode} media={media} meeting={meeting} screen={screen} onLeave={leave} />
   return <Lobby user={user} roomCode={roomCode} media={media} onJoin={join} />
 }
 

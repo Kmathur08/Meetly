@@ -2,10 +2,9 @@ import { useEffect, useState } from 'react'
 import Brand from '../../components/Brand'
 import ChatPanel from '../../components/ChatPanel'
 import VideoTile from '../../components/VideoTile'
-import useScreenShare from '../../hooks/useScreenShare'
 
-export default function Room({ user, roomCode, media, meeting, onLeave }) {
-  const screen = useScreenShare(meeting.setScreenTrack)
+
+export default function Room({ user, roomCode, media, meeting, screen, onLeave }) {
   const [chatOpen, setChatOpen] = useState(false)
   const [notice, setNotice] = useState('')
   const peers = Object.values(meeting.peers)

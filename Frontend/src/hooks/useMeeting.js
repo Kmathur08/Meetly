@@ -6,11 +6,12 @@ const FALLBACK_ICE = [{ urls: ['stun:stun.l.google.com:19302'] }]
 
 // Joins a room and keeps one RTCPeerConnection per other participant (a full mesh).
 // Negotiation follows the "perfect negotiation" pattern, so both sides can renegotiate without glare.
-export default function useMeeting({ roomCode, localStream, enabled }) {
+export default function useMeeting({ roomCode, localStream, enabled, mediaState }) {
   const socketRef = useRef(null)
   const connectionsRef = useRef(new Map())
   const localStreamRef = useRef(localStream)
   const screenTrackRef = useRef(null)
+  const mediaStateRef = useRef(mediaState)
   const [selfId, setSelfId] = useState(null)
   const [peers, setPeers] = useState({})
   const [messages, setMessages] = useState([])
@@ -18,6 +19,7 @@ export default function useMeeting({ roomCode, localStream, enabled }) {
   const [error, setError] = useState('')
 
   localStreamRef.current = localStream
+  mediaStateRef.current = mediaState
 
   const updatePeer = useCallback((id, patch) => {
     setPeers((current) => current[id] ? { ...current, [id]: { ...current[id], ...patch } } : current)
@@ -135,6 +137,7 @@ export default function useMeeting({ roomCode, localStream, enabled }) {
         setMessages(reply.messages)
         // The newcomer is the impolite side, so existing members yield if both offer at once.
         reply.peers.forEach((peer) => createConnection(peer, false))
+        socket.emit('media-state', mediaStateRef.current)
         setStatus('joined')
       })
     }
@@ -153,7 +156,12 @@ export default function useMeeting({ roomCode, localStream, enabled }) {
         setStatus('reconnecting')
       }
     })
-    socket.on('peer-joined', (peer) => createConnection(peer, true))
+    socket.on('peer-joined', (peer) => {
+      createConnection(peer, true)
+      // Newcomers only learn our mute/camera state from the next broadcast, so send one now.
+      socket.emit('media-state', mediaStateRef.current)
+    })
+    socket.on('peer-media', (id, media) => updatePeer(id, { media }))
     socket.on('peer-left', removePeer)
     socket.on('signal', handleSignal)
     socket.on('chat-message', (message) => setMessages((current) => [...current, message]))
@@ -177,6 +185,11 @@ export default function useMeeting({ roomCode, localStream, enabled }) {
   useEffect(() => {
     connectionsRef.current.forEach(attachLocalTracks)
   }, [localStream, attachLocalTracks])
+
+  const { audio, video, screen } = mediaState || {}
+  useEffect(() => {
+    if (socketRef.current?.connected) socketRef.current.emit('media-state', { audio, video, screen })
+  }, [audio, video, screen])
 
   const setScreenTrack = useCallback((track) => {
     screenTrackRef.current = track
