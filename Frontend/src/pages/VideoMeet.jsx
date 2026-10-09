@@ -13,8 +13,7 @@ function VideoMeet({ user }) {
   const roomCode = parseRoomCode(window.location.hash)
   const [joined, setJoined] = useState(false)
   const media = useLocalMedia()
-  const [screenTrackHandler, setScreenTrackHandler] = useState(() => () => {})
-  const screen = useScreenShare(screenTrackHandler)
+  const screen = useScreenShare()
   const meeting = useMeeting({
     roomCode,
     localStream: media.stream,
@@ -22,7 +21,10 @@ function VideoMeet({ user }) {
     mediaState: { audio: media.micOn, video: media.cameraOn, screen: screen.sharing },
   })
 
-  useEffect(() => { setScreenTrackHandler(() => meeting.setScreenTrack) }, [meeting.setScreenTrack])
+  const { setScreenTrack } = meeting
+  useEffect(() => {
+    setScreenTrack(screen.screenStream?.getVideoTracks()[0] || null)
+  }, [screen.screenStream, setScreenTrack])
 
   useEffect(() => {
     // A bare #meet (or a broken code) gets a fresh room so there is always something to share.

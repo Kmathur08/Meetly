@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-export default function useScreenShare(onTrackChange) {
+export default function useScreenShare() {
   const streamRef = useRef(null)
   const [sharing, setSharing] = useState(false)
   const [screenStream, setScreenStream] = useState(null)
@@ -11,8 +11,7 @@ export default function useScreenShare(onTrackChange) {
     streamRef.current = null
     setScreenStream(null)
     setSharing(false)
-    onTrackChange(null)
-  }, [onTrackChange])
+  }, [])
 
   const start = useCallback(async () => {
     try {
@@ -23,12 +22,11 @@ export default function useScreenShare(onTrackChange) {
       track.addEventListener('ended', stop)
       setScreenStream(stream)
       setSharing(true)
-      onTrackChange(track)
       return true
     } catch {
       return false
     }
-  }, [onTrackChange, stop])
+  }, [stop])
 
   useEffect(() => () => streamRef.current?.getTracks().forEach((track) => track.stop()), [])
 
