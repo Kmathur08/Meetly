@@ -10,6 +10,7 @@ export default function useMeeting({ roomCode, localStream, enabled }) {
   const socketRef = useRef(null)
   const connectionsRef = useRef(new Map())
   const localStreamRef = useRef(localStream)
+  const screenTrackRef = useRef(null)
   const [selfId, setSelfId] = useState(null)
   const [peers, setPeers] = useState({})
   const [messages, setMessages] = useState([])
@@ -20,6 +21,22 @@ export default function useMeeting({ roomCode, localStream, enabled }) {
 
   const updatePeer = useCallback((id, patch) => {
     setPeers((current) => current[id] ? { ...current, [id]: { ...current[id], ...patch } } : current)
+  }, [])
+
+  // Sends our current audio and video (the screen while sharing, otherwise the camera) to one peer.
+  // replaceTrack swaps media without renegotiating; addTrack is only needed the first time a kind appears.
+  const attachLocalTracks = useCallback((entry) => {
+    const stream = localStreamRef.current
+    const outgoing = {
+      audio: stream?.getAudioTracks()[0] || null,
+      video: screenTrackRef.current || stream?.getVideoTracks()[0] || null,
+    }
+    for (const kind of ['audio', 'video']) {
+      const track = outgoing[kind]
+      const sender = entry.senders[kind]
+      if (!sender && track) entry.senders[kind] = entry.pc.addTrack(track)
+      else if (sender && sender.track !== track) sender.replaceTrack(track).catch(() => {})
+    }
   }, [])
 
   const removePeer = useCallback((id) => {
@@ -45,11 +62,11 @@ export default function useMeeting({ roomCode, localStream, enabled }) {
     const createConnection = (peer, polite) => {
       const pc = new RTCPeerConnection({ iceServers })
       const remoteStream = new MediaStream()
-      const entry = { pc, polite, makingOffer: false, ignoreOffer: false }
+      const entry = { pc, polite, makingOffer: false, ignoreOffer: false, senders: {} }
       connections.set(peer.id, entry)
       setPeers((current) => ({ ...current, [peer.id]: { id: peer.id, name: peer.name, stream: remoteStream, media: { audio: true, video: true, screen: false }, connection: 'connecting' } }))
 
-      localStreamRef.current?.getTracks().forEach((track) => pc.addTrack(track, localStreamRef.current))
+      attachLocalTracks(entry)
 
       pc.ontrack = ({ track }) => {
         remoteStream.addTrack(track)
@@ -154,9 +171,19 @@ export default function useMeeting({ roomCode, localStream, enabled }) {
       closeAll()
       socketRef.current = null
     }
-  }, [enabled, roomCode, removePeer, updatePeer])
+  }, [enabled, roomCode, removePeer, updatePeer, attachLocalTracks])
+
+  // The camera may only become available after joining; pass it to everyone already connected.
+  useEffect(() => {
+    connectionsRef.current.forEach(attachLocalTracks)
+  }, [localStream, attachLocalTracks])
+
+  const setScreenTrack = useCallback((track) => {
+    screenTrackRef.current = track
+    connectionsRef.current.forEach(attachLocalTracks)
+  }, [attachLocalTracks])
 
   const sendMessage = useCallback((text) => socketRef.current?.emit('chat-message', text), [])
 
-  return { selfId, peers, messages, status, error, sendMessage }
+  return { selfId, peers, messages, status, error, sendMessage, setScreenTrack }
 }
