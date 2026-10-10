@@ -1,9 +1,15 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const MAX_LENGTH = 500
 
 export default function ChatPanel({ messages, selfId, onSend, onClose }) {
   const [text, setText] = useState('')
+  const listRef = useRef(null)
+
+  useEffect(() => {
+    const list = listRef.current
+    if (list) list.scrollTop = list.scrollHeight
+  }, [messages.length])
 
   const submit = (event) => {
     event.preventDefault()
@@ -14,7 +20,7 @@ export default function ChatPanel({ messages, selfId, onSend, onClose }) {
 
   return <aside className="chat-panel" aria-label="Room chat">
     <div className="chat-heading"><strong>Room chat</strong><button onClick={onClose} aria-label="Close chat">×</button></div>
-    <div className="chat-messages" aria-live="polite">
+    <div className="chat-messages" aria-live="polite" ref={listRef}>
       {messages.length === 0
         ? <p className="chat-empty">Messages are visible to everyone in this room while it's open.</p>
         : messages.map((message) => <div className={`chat-message${message.from === selfId ? ' own' : ''}`} key={`${message.from}-${message.at}`}>

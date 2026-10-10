@@ -7,6 +7,12 @@ import VideoTile from '../../components/VideoTile'
 export default function Room({ user, roomCode, media, meeting, screen, onLeave }) {
   const [chatOpen, setChatOpen] = useState(false)
   const [notice, setNotice] = useState('')
+  const [readCount, setReadCount] = useState(0)
+  const unread = chatOpen ? 0 : meeting.messages.length - readCount
+
+  useEffect(() => {
+    if (chatOpen) setReadCount(meeting.messages.length)
+  }, [chatOpen, meeting.messages.length])
   const peers = Object.values(meeting.peers)
   const knownPeers = useRef(new Map())
 
@@ -55,7 +61,7 @@ export default function Room({ user, roomCode, media, meeting, screen, onLeave }
       <button className={media.micOn ? '' : 'off'} onClick={media.toggleMic} disabled={!media.hasAudio}>{media.micOn ? '◉' : '⌁'} <span>{media.micOn ? 'Mute' : 'Unmute'}</span></button>
       <button className={media.cameraOn ? '' : 'off'} onClick={media.toggleCamera} disabled={!media.hasVideo}>{media.cameraOn ? '▣' : '□'} <span>{media.cameraOn ? 'Camera' : 'Camera off'}</span></button>
       {screen.supported && <button className={screen.sharing ? 'active-control' : ''} onClick={async () => { if (screen.sharing) screen.stop(); else if (!(await screen.start())) setNotice('Screen sharing was cancelled.') }}>â–¤ <span>{screen.sharing ? 'Stop share' : 'Share screen'}</span></button>}
-      <button className={chatOpen ? 'active-control' : ''} onClick={() => setChatOpen(!chatOpen)}>☷ <span>Chat{meeting.messages.length ? ` (${meeting.messages.length})` : ''}</span></button>
+      <button className={chatOpen ? 'active-control' : ''} onClick={() => setChatOpen(!chatOpen)}>☷ <span>Chat</span>{unread > 0 && <b className="unread-badge" aria-label={`${unread} unread`}>{unread}</b>}</button>
       <button onClick={copyLink}>↗ <span>Invite</span></button>
       <button className="off" onClick={onLeave}>✕ <span>Leave</span></button>
     </nav>
