@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Brand from '../../components/Brand'
 import ChatPanel from '../../components/ChatPanel'
 import VideoTile from '../../components/VideoTile'
@@ -8,6 +8,19 @@ export default function Room({ user, roomCode, media, meeting, screen, onLeave }
   const [chatOpen, setChatOpen] = useState(false)
   const [notice, setNotice] = useState('')
   const peers = Object.values(meeting.peers)
+  const knownPeers = useRef(new Map())
+
+  // Announce arrivals and departures by name; the call itself updates silently.
+  useEffect(() => {
+    const previous = knownPeers.current
+    const current = new Map(peers.map((peer) => [peer.id, peer.name]))
+    const joinedName = [...current].find(([id]) => !previous.has(id))?.[1]
+    const leftName = [...previous].find(([id]) => !current.has(id))?.[1]
+    knownPeers.current = current
+    if (meeting.status !== 'joined') return
+    if (joinedName) setNotice(`${joinedName} joined.`)
+    else if (leftName) setNotice(`${leftName} left.`)
+  }, [peers, meeting.status])
 
   useEffect(() => {
     if (!notice) return undefined
@@ -26,11 +39,12 @@ export default function Room({ user, roomCode, media, meeting, screen, onLeave }
 
   return <main className="meeting-room">
     <header className="meeting-header"><a className="brand" href="#home"><Brand /><span>Meetly</span></a><span className="room-label">Room {roomCode}</span><button className="leave-button" onClick={onLeave}>Leave room</button></header>
+    {meeting.status === 'reconnecting' && <div className="connection-banner" role="status">Connection lost. Reconnectingâ€¦</div>}
     <section className={`meeting-stage people-${Math.min(peers.length + 1, 6)}`}>
       {screen.sharing
         ? <VideoTile stream={screen.screenStream} name={user.name} label="You Â· Sharing" muted showVideo micOn={media.micOn} />
         : <VideoTile stream={media.stream} name={user.name} label="You" muted mirrored showVideo={media.cameraOn} micOn={media.micOn} />}
-      {peers.map((peer) => <VideoTile key={peer.id} stream={peer.stream} name={peer.name} showVideo={peer.media.video || peer.media.screen} micOn={peer.media.audio} />)}
+      {peers.map((peer) => <VideoTile key={peer.id} stream={peer.stream} name={peer.name} label={peer.connection === 'failed' ? 'Connection failed' : peer.media.screen ? 'Sharing' : ''} showVideo={peer.media.video || peer.media.screen} micOn={peer.media.audio} />)}
       {peers.length === 0 && <div className="stage-empty">
         <h1>You are the only one here</h1>
         <p>Share the room link to bring your team in.</p>
