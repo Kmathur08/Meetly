@@ -172,3 +172,64 @@
   border: 0;
   border-radius: 0;
 }
+.chat-message.own {
+  justify-items: end;
+  text-align: right;
+}
+.chat-message.own b {
+  color: var(--muted);
+}
+.chat-message span {
+  overflow-wrap: anywhere;
+}
+.chat-form button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.unread-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  border-radius: 9px;
+  background: var(--green);
+  color: var(--night);
+  font-size: 10px;
+}
+.meeting-controls button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.connection-banner {
+  position: fixed;
+  top: 92px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  padding: 9px 16px;
+  border-radius: 8px;
+  background: #5b2333;
+  color: #ffd9df;
+  font-size: 13px;
+  font-weight: 600;
+}
+.meeting-room .leave-button {
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+@media (max-width: 760px) {
+  .meeting-stage.people-2,
+  .meeting-stage.people-3,
+  .meeting-stage.people-4 {
+    --cols: 1;
+  }
+  .meeting-stage.people-5,
+  .meeting-stage.people-6 {
+    --cols: 2;
+  }
+  .video-tile {
+    max-height: none;
+  }
+}
