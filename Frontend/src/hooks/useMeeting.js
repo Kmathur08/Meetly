@@ -77,7 +77,11 @@ export default function useMeeting({ roomCode, localStream, enabled, mediaState 
         track.onended = () => remoteStream.removeTrack(track)
       }
       pc.onicecandidate = ({ candidate }) => candidate && sendSignal(peer.id, { candidate })
-      pc.onconnectionstatechange = () => updatePeer(peer.id, { connection: pc.connectionState })
+      pc.onconnectionstatechange = () => {
+        updatePeer(peer.id, { connection: pc.connectionState })
+        // A network change (Wi-Fi to mobile data, say) breaks the ICE path; restarting finds a new one.
+        if (pc.connectionState === 'failed') pc.restartIce()
+      }
       pc.onnegotiationneeded = async () => {
         try {
           entry.makingOffer = true
