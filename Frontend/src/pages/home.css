@@ -165,3 +165,9 @@
     font-size: 18px;
   }
 }
+.home-error {
+  margin: 8px 0 0;
+  color: #aa3650;
+  font-size: 13px;
+  font-weight: 600;
+}
