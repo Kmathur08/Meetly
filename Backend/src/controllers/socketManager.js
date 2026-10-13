@@ -51,6 +51,9 @@ const connectToSocket = (server) => {
         socket.on("join-room", (roomCode, ack) => {
             if(!isValidRoomCode(roomCode)) return reply(ack, {ok: false, error: "That meeting code isn't valid."});
 
+            // Switching rooms on the same connection must tell the old room we left.
+            leaveCurrentRoom(socket);
+
             const participant = {id: socket.id, name: socket.data.user.name};
             const result = rooms.join(roomCode, participant);
             if(!result.ok) return reply(ack, {ok: false, error: result.error});
