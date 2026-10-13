@@ -12,8 +12,7 @@ const featureCards = [
 export default function LandingPage() {
   const [toast, setToast] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
-  const [micOn, setMicOn] = useState(true)
-  const [cameraOn, setCameraOn] = useState(true)
+
   const [meetingCode, setMeetingCode] = useState('')
 
   useEffect(() => {
@@ -23,11 +22,7 @@ export default function LandingPage() {
   }, [toast])
 
   const showToast = (message) => setToast(message)
-  const toggleDevice = (device, enabled, setEnabled) => {
-    const nextState = !enabled
-    setEnabled(nextState)
-    showToast(`${device} ${nextState ? 'on' : 'off'}.`)
-  }
+
 
   // The meeting page asks for sign-in when needed and comes back here afterwards.
   const startMeeting = () => { window.location.hash = `meet/${createRoomCode()}` }

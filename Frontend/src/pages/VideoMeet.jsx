@@ -46,4 +46,5 @@ function VideoMeet({ user }) {
   return <Lobby user={user} roomCode={roomCode} media={media} onJoin={join} />
 }
 
-export default withAuthGuard(VideoMeet)
+const GuardedVideoMeet = withAuthGuard(VideoMeet)
+export default GuardedVideoMeet

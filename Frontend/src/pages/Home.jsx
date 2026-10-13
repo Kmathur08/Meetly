@@ -38,4 +38,5 @@ function Home({ user }) {
   </main>
 }
 
-export default withAuthGuard(Home)
+const GuardedHome = withAuthGuard(Home)
+export default GuardedHome

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, clearToken, getToken } from '../lib/api'
 
-export const redirectToSignIn = () => {
+const redirectToSignIn = () => {
   sessionStorage.setItem('meetly_next', window.location.hash.slice(1))
   window.location.hash = 'signin'
 }
