@@ -137,14 +137,6 @@
   border-radius: 12px;
   margin: 14px 0;
 }
-.preview-frame video,
-.self-preview video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transform: scaleX(-1);
-}
 .preview-name {
   position: absolute;
   left: 14px;
@@ -200,16 +192,6 @@
 .stage-empty {
   text-align: center;
 }
-.stage-avatar {
-  display: grid;
-  place-items: center;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  margin: auto;
-  background: #6953c9;
-  font-weight: 800;
-}
 .stage-empty h1 {
   font: 700 28px "Space Grotesk";
   margin: 18px 0 8px;
@@ -217,23 +199,6 @@
 .stage-empty p {
   color: #aaa8bb;
   margin: 0 0 22px;
-}
-.self-preview {
-  position: absolute;
-  right: 0;
-  bottom: 24px;
-  width: 190px;
-  aspect-ratio: 1.2;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  border-radius: 10px;
-  overflow: hidden;
-  background: #28263a;
-}
-.self-preview span {
-  position: absolute;
-  left: 9px;
-  bottom: 7px;
-  font-size: 11px;
 }
 .meeting-controls {
   position: fixed;
@@ -308,11 +273,6 @@
   .meeting-stage {
     height: calc(100vh - 170px);
     min-height: 350px;
-  }
-  .self-preview {
-    right: 0;
-    bottom: 20px;
-    width: 130px;
   }
   .meeting-controls {
     bottom: 18px;
