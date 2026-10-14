@@ -45,10 +45,10 @@ export default function Room({ user, roomCode, media, meeting, screen, onLeave }
 
   return <main className="meeting-room">
     <header className="meeting-header"><a className="brand" href="#home"><Brand /><span>Meetly</span></a><span className="room-label">Room {roomCode}</span><button className="leave-button" onClick={onLeave}>Leave room</button></header>
-    {meeting.status === 'reconnecting' && <div className="connection-banner" role="status">Connection lost. Reconnectingâ€¦</div>}
+    {meeting.status === 'reconnecting' && <div className="connection-banner" role="status">Connection lost. Reconnecting…</div>}
     <section className={`meeting-stage people-${Math.min(peers.length + 1, 6)}`}>
       {screen.sharing
-        ? <VideoTile stream={screen.screenStream} name={user.name} label="You Â· Sharing" muted showVideo micOn={media.micOn} />
+        ? <VideoTile stream={screen.screenStream} name={user.name} label="You · Sharing" muted showVideo micOn={media.micOn} />
         : <VideoTile stream={media.stream} name={user.name} label="You" muted mirrored showVideo={media.cameraOn} micOn={media.micOn} />}
       {peers.map((peer) => <VideoTile key={peer.id} stream={peer.stream} name={peer.name} label={peer.connection === 'failed' ? 'Connection failed' : peer.media.screen ? 'Sharing' : ''} showVideo={peer.media.video || peer.media.screen} micOn={peer.media.audio} />)}
       {peers.length === 0 && <div className="stage-empty">
@@ -60,7 +60,7 @@ export default function Room({ user, roomCode, media, meeting, screen, onLeave }
     <nav className="meeting-controls" aria-label="Meeting controls">
       <button className={media.micOn ? '' : 'off'} onClick={media.toggleMic} disabled={!media.hasAudio}>{media.micOn ? '◉' : '⌁'} <span>{media.micOn ? 'Mute' : 'Unmute'}</span></button>
       <button className={media.cameraOn ? '' : 'off'} onClick={media.toggleCamera} disabled={!media.hasVideo}>{media.cameraOn ? '▣' : '□'} <span>{media.cameraOn ? 'Camera' : 'Camera off'}</span></button>
-      {screen.supported && <button className={screen.sharing ? 'active-control' : ''} onClick={async () => { if (screen.sharing) screen.stop(); else if (!(await screen.start())) setNotice('Screen sharing was cancelled.') }}>â–¤ <span>{screen.sharing ? 'Stop share' : 'Share screen'}</span></button>}
+      {screen.supported && <button className={screen.sharing ? 'active-control' : ''} onClick={async () => { if (screen.sharing) screen.stop(); else if (!(await screen.start())) setNotice('Screen sharing was cancelled.') }}>▤ <span>{screen.sharing ? 'Stop share' : 'Share screen'}</span></button>}
       <button className={chatOpen ? 'active-control' : ''} onClick={() => setChatOpen(!chatOpen)}>☷ <span>Chat</span>{unread > 0 && <b className="unread-badge" aria-label={`${unread} unread`}>{unread}</b>}</button>
       <button onClick={copyLink}>↗ <span>Invite</span></button>
       <button className="off" onClick={onLeave}>✕ <span>Leave</span></button>
