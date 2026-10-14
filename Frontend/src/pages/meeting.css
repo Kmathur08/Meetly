@@ -233,3 +233,6 @@
     max-height: none;
   }
 }
+.meeting-room .chat-panel {
+  color: var(--ink);
+}
