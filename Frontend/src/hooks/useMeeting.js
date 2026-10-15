@@ -28,6 +28,7 @@ export default function useMeeting({ roomCode, localStream, enabled, mediaState 
   // Sends our current audio and video (the screen while sharing, otherwise the camera) to one peer.
   // replaceTrack swaps media without renegotiating; addTrack is only needed the first time a kind appears.
   const attachLocalTracks = useCallback((entry) => {
+    if (!entry.canSend) return
     const stream = localStreamRef.current
     const outgoing = {
       audio: stream?.getAudioTracks()[0] || null,
@@ -64,7 +65,9 @@ export default function useMeeting({ roomCode, localStream, enabled, mediaState 
     const createConnection = (peer, polite) => {
       const pc = new RTCPeerConnection({ iceServers })
       const remoteStream = new MediaStream()
-      const entry = { pc, polite, makingOffer: false, ignoreOffer: false, senders: {} }
+      // Existing members wait for the newcomer's offer before adding tracks. If both sides offered at once,
+      // Chrome's rollback on the polite side can leave it without ICE candidates and the call never connects.
+      const entry = { pc, polite, makingOffer: false, ignoreOffer: false, senders: {}, canSend: !polite, queue: Promise.resolve() }
       connections.set(peer.id, entry)
       setPeers((current) => ({ ...current, [peer.id]: { id: peer.id, name: peer.name, stream: remoteStream, media: { audio: true, video: true, screen: false }, connection: 'connecting' } }))
 
@@ -96,9 +99,7 @@ export default function useMeeting({ roomCode, localStream, enabled, mediaState 
       return entry
     }
 
-    const handleSignal = async (fromId, { description, candidate } = {}) => {
-      const entry = connections.get(fromId)
-      if (!entry) return
+    const processSignal = async (fromId, entry, { description, candidate } = {}) => {
       const { pc } = entry
       try {
         if (description) {
@@ -107,6 +108,11 @@ export default function useMeeting({ roomCode, localStream, enabled, mediaState 
           if (entry.ignoreOffer) return
           await pc.setRemoteDescription(description)
           if (description.type === 'offer') {
+            if (!entry.canSend) {
+              entry.canSend = true
+              // addTrack now reuses the transceivers from the offer, so the answer already carries our media.
+              attachLocalTracks(entry)
+            }
             await pc.setLocalDescription()
             sendSignal(fromId, { description: pc.localDescription })
           }
@@ -120,6 +126,13 @@ export default function useMeeting({ roomCode, localStream, enabled, mediaState 
       } catch (err) {
         console.error('Signal handling failed', err)
       }
+    }
+
+    // Handle each peer's signals strictly in order; a candidate must not race ahead of its description.
+    const handleSignal = (fromId, payload) => {
+      const entry = connections.get(fromId)
+      if (!entry) return
+      entry.queue = entry.queue.then(() => processSignal(fromId, entry, payload))
     }
 
     const closeAll = () => {
