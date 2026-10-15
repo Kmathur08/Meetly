@@ -8,6 +8,7 @@ import userRoutes from "./routes/users.routes.js";
 import {notFound, errorHandler} from "./middleware/errors.js";
 
 const app = express();
+app.disable("x-powered-by");
 const server = createServer(app);
 const io = connectToSocket(server)
 
@@ -28,6 +29,10 @@ app.use(errorHandler);
 const start = async () => {
     if(!config.mongoUri) {
         throw new Error("MONGO_URI or MONGODB_URI is required");
+    }
+
+    if(process.env.NODE_ENV === "production" && config.clientOrigins.length === 0) {
+        console.warn("CLIENT_ORIGIN is not set, so any website can call this API. Set it to your frontend's URL.");
     }
 
     await mongoose.connect(config.mongoUri);
