@@ -2,9 +2,12 @@
   "name": "meetly",
   "private": true,
   "scripts": {
+    "install:all": "npm --prefix Backend ci && npm --prefix Frontend ci",
     "build": "npm --prefix Frontend run build",
     "dev": "npm --prefix Frontend run dev",
     "frontend": "npm --prefix Frontend run dev",
-    "backend": "npm --prefix Backend run dev"
+    "backend": "npm --prefix Backend run dev",
+    "lint": "npm --prefix Frontend run lint",
+    "test": "npm --prefix Backend test && npm --prefix Frontend test"
   }
 }
