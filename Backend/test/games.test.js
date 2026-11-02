@@ -93,3 +93,37 @@ test("bingo: numbers can't be called twice and cards lock after the first call",
     assert.equal(game.move(state, "b", {number: 7}).ok, false);
     assert.equal(game.move(state, "b", {action: "shuffle"}).ok, false);
 });
+
+test("dots & houses: closing a box scores and gives another turn", () => {
+    const game = GAMES["dots-and-boxes"];
+    const state = game.create([A, B], {dots: 4});
+    play(game, state, [
+        ["a", {kind: "h", r: 0, c: 0}],
+        ["b", {kind: "h", r: 1, c: 0}],
+        ["a", {kind: "v", r: 0, c: 0}],
+        ["b", {kind: "v", r: 0, c: 1}]
+    ]);
+    assert.equal(state.players[1].score, 1);
+    assert.equal(state.boxes[0], 1);
+    // Ben closed a box, so it's still Ben's turn.
+    assert.equal(game.view(state).current, "b");
+    assert.equal(game.move(state, "b", {kind: "h", r: 0, c: 0}).ok, false);
+    assert.equal(game.move(state, "b", {kind: "h", r: 9, c: 0}).ok, false);
+});
+
+test("dots & houses: the game ends when every box is built", () => {
+    const game = GAMES["dots-and-boxes"];
+    const state = game.create([A, B], {dots: 99});
+    assert.equal(game.view(state).dots, 5);
+
+    const small = game.create([A, B], {dots: 4});
+    const lines = [];
+    for(let r = 0; r <= 3; r += 1) for(let c = 0; c < 3; c += 1) lines.push({kind: "h", r, c});
+    for(let r = 0; r < 3; r += 1) for(let c = 0; c <= 3; c += 1) lines.push({kind: "v", r, c});
+    for(const line of lines) {
+        const current = game.view(small).current;
+        assert.equal(game.move(small, current, line).ok, true);
+    }
+    assert.equal(small.finished, true);
+    assert.equal(small.players[0].score + small.players[1].score, 9);
+});
