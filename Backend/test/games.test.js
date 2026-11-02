@@ -1,6 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {GAMES} from "../src/games/index.js";
+import {BINGO_LINES, countLines} from "../src/games/bingo.js";
 
 const A = {id: "a", name: "Asha"};
 const B = {id: "b", name: "Ben"};
@@ -52,4 +53,43 @@ test("vanishing zero & cross: the mark that vanishes can't count towards a line"
     play(game, state, [["a", {cell: 0}], ["b", {cell: 3}], ["a", {cell: 1}], ["b", {cell: 4}], ["a", {cell: 8}], ["b", {cell: 6}], ["a", {cell: 2}]]);
     assert.equal(state.finished, false);
     assert.equal(state.cells[0], null);
+});
+
+test("bingo: lines are counted across rows, columns and diagonals", () => {
+    assert.equal(BINGO_LINES.length, 12);
+    const card = Array.from({length: 25}, (_, i) => i + 1);
+    assert.equal(countLines(card, new Set([1, 2, 3, 4, 5])), 1);
+    assert.equal(countLines(card, new Set([1, 7, 13, 19, 25, 2, 3, 4, 5])), 2);
+});
+
+test("bingo: cards stay private and the first to five lines wins", () => {
+    const game = GAMES.bingo;
+    const state = game.create([A, B], {}, () => 0.5);
+    state.cards.a = Array.from({length: 25}, (_, i) => i + 1);
+
+    assert.equal(game.view(state, "b").card.length, 25);
+    assert.equal(game.view(state, "b").cards, null);
+    assert.equal(game.view(state, "spectator").card, null);
+
+    // Calling four columns of Asha's card, then 5, completes four columns, the top row and a diagonal.
+    const calls = [1, 6, 11, 16, 21, 2, 7, 12, 17, 22, 3, 8, 13, 18, 23, 4, 9, 14, 19, 24, 5];
+    let turn = 0;
+    for(const number of calls) {
+        if(state.finished) break;
+        const player = turn % 2 ? "b" : "a";
+        assert.equal(game.move(state, player, {number}).ok, true);
+        turn += 1;
+    }
+    assert.equal(state.finished, true);
+    assert.ok(state.winners.includes("a"));
+    assert.ok(game.view(state, "b").cards.a);
+});
+
+test("bingo: numbers can't be called twice and cards lock after the first call", () => {
+    const game = GAMES.bingo;
+    const state = game.create([A, B]);
+    assert.equal(game.move(state, "b", {action: "shuffle"}).ok, true);
+    play(game, state, [["a", {number: 7}]]);
+    assert.equal(game.move(state, "b", {number: 7}).ok, false);
+    assert.equal(game.move(state, "b", {action: "shuffle"}).ok, false);
 });
