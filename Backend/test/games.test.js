@@ -2,6 +2,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {GAMES} from "../src/games/index.js";
 import {BINGO_LINES, countLines} from "../src/games/bingo.js";
+import {buildPuzzle, GRID_SIZE} from "../src/games/wordSearch.js";
 
 const A = {id: "a", name: "Asha"};
 const B = {id: "b", name: "Ben"};
@@ -126,4 +127,32 @@ test("dots & houses: the game ends when every box is built", () => {
     }
     assert.equal(small.finished, true);
     assert.equal(small.players[0].score + small.players[1].score, 9);
+});
+
+test("word search: every placed word reads correctly in the grid", () => {
+    const words = ["ELEPHANT", "TIGER", "ZEBRA", "LION", "PANDA", "CAMEL", "RABBIT", "PARROT"];
+    const {grid, placed} = buildPuzzle(words);
+    assert.equal(grid.length, GRID_SIZE);
+    assert.ok(grid.every((row) => /^[A-Z]+$/.test(row) && row.length === GRID_SIZE));
+    assert.ok(placed.length >= 6);
+    for(const {word, cells} of placed) assert.equal(cells.map(([r, c]) => grid[r][c]).join(""), word);
+});
+
+test("word search: the first finder claims a word, forwards or backwards", () => {
+    const game = GAMES["word-search"];
+    const state = game.create([A, B], {theme: "Fruits"});
+    assert.equal(state.theme, "Fruits");
+    const [first, ...rest] = state.words;
+    const start = first.cells[0];
+    const end = first.cells[first.cells.length - 1];
+
+    assert.equal(game.view(state).words[0].cells, null);
+    assert.equal(game.move(state, "a", {from: [0, 0], to: [0, 0]}).ok, false);
+    assert.equal(game.move(state, "b", {from: end, to: start}).ok, true);
+    assert.equal(game.move(state, "a", {from: start, to: end}).ok, false);
+    assert.equal(state.players[1].score, 1);
+
+    for(const word of rest) play(game, state, [["a", {from: word.cells[0], to: word.cells[word.cells.length - 1]}]]);
+    assert.equal(state.finished, true);
+    assert.deepEqual(state.winners, rest.length > 1 ? ["a"] : ["a", "b"]);
 });
