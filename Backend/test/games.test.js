@@ -1,5 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
+import {createGameRegistry} from "../src/controllers/games.js";
 import {GAMES} from "../src/games/index.js";
 import {BINGO_LINES, countLines} from "../src/games/bingo.js";
 import {buildPuzzle, GRID_SIZE} from "../src/games/wordSearch.js";
@@ -155,4 +156,54 @@ test("word search: the first finder claims a word, forwards or backwards", () =>
     for(const word of rest) play(game, state, [["a", {from: word.cells[0], to: word.cells[word.cells.length - 1]}]]);
     assert.equal(state.finished, true);
     assert.deepEqual(state.winners, rest.length > 1 ? ["a"] : ["a", "b"]);
+});
+
+test("game sessions: lobby, start, play and finish", () => {
+    const games = createGameRegistry();
+    assert.equal(games.open("r", A, "chess").ok, false);
+    assert.equal(games.open("r", A, "tic-tac-toe").ok, true);
+    assert.equal(games.open("r", B, "bingo").ok, false);
+    assert.equal(games.start("r", "a").ok, false);
+    assert.equal(games.join("r", B).ok, true);
+    assert.equal(games.join("r", C).ok, false);
+    assert.equal(games.start("r", "b").ok, false);
+    assert.equal(games.start("r", "a").ok, true);
+
+    assert.equal(games.view("r", "c").phase, "playing");
+    for(const [player, cell] of [["a", 0], ["b", 3], ["a", 1], ["b", 4], ["a", 2]]) assert.equal(games.move("r", player, {cell}).ok, true);
+    assert.equal(games.view("r", "a").phase, "finished");
+
+    assert.equal(games.rematch("r", C).ok, true);
+    const lobby = games.view("r", "c");
+    assert.equal(lobby.phase, "lobby");
+    assert.equal(lobby.hostId, "c");
+    assert.equal(lobby.players.length, 2);
+});
+
+test("game sessions: a player leaving mid-game hands the win to the other", () => {
+    const games = createGameRegistry();
+    games.open("r", A, "tic-tac-toe");
+    games.join("r", B);
+    games.start("r", "a");
+    assert.equal(games.memberLeft("r", "a"), true);
+
+    const view = games.view("r", "b");
+    assert.equal(view.phase, "finished");
+    assert.deepEqual(view.board.winners, ["b"]);
+    assert.equal(view.hostId, "b");
+    assert.equal(games.memberLeft("r", "nobody"), false);
+});
+
+test("game sessions: only the host ends a running game, anyone closes a finished one", () => {
+    const games = createGameRegistry();
+    games.open("r", A, "word-search");
+    assert.equal(games.leave("r", "a").ok, true);
+    assert.equal(games.view("r", "a"), null);
+
+    games.open("r", A, "bingo");
+    games.join("r", B);
+    games.start("r", "a");
+    assert.equal(games.close("r", "b").ok, false);
+    assert.equal(games.close("r", "a").ok, true);
+    assert.equal(games.view("r", "a"), null);
 });
