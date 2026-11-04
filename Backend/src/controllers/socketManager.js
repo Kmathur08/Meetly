@@ -2,9 +2,25 @@ import { Server } from "socket.io";
 import {isAllowedOrigin} from "../config/env.js";
 import {findSession} from "../middleware/auth.js";
 import {isValidRoomCode} from "../utils/validate.js";
+import {createGameRegistry} from "./games.js";
 import {createRoomRegistry} from "./rooms.js";
 
 const MAX_CHAT_LENGTH = 500;
+
+// Allows at most `limit` calls per `windowMs` for one connection.
+const createLimiter = (limit, windowMs) => {
+    let windowStart = 0;
+    let count = 0;
+    return () => {
+        const now = Date.now();
+        if(now - windowStart > windowMs) {
+            windowStart = now;
+            count = 0;
+        }
+        count += 1;
+        return count <= limit;
+    };
+};
 
 const connectToSocket = (server) => {
     const io = new Server(server, {
@@ -15,6 +31,12 @@ const connectToSocket = (server) => {
         maxHttpBufferSize: 64 * 1024
     });
     const rooms = createRoomRegistry();
+    const games = createGameRegistry();
+
+    // Every member gets their own view: a Bingo card, for example, is only sent to its owner.
+    const broadcastGame = (roomCode) => {
+        for(const member of rooms.peersOf(roomCode)) io.to(member.id).emit("game-state", games.view(roomCode, member.id));
+    };
 
     io.use(async (socket, next) => {
         try {
@@ -32,21 +54,15 @@ const connectToSocket = (server) => {
         if(!left) return;
         socket.leave(left.roomCode);
         socket.to(left.roomCode).emit("peer-left", socket.id);
+        if(left.empty) games.remove(left.roomCode);
+        else if(games.memberLeft(left.roomCode, socket.id)) broadcastGame(left.roomCode);
     };
 
     io.on("connection", (socket) => {
         const reply = (ack, payload) => typeof ack === "function" && ack(payload);
-        let chatWindowStart = 0;
-        let chatCount = 0;
-        const chatAllowed = () => {
-            const now = Date.now();
-            if(now - chatWindowStart > 10000) {
-                chatWindowStart = now;
-                chatCount = 0;
-            }
-            chatCount += 1;
-            return chatCount <= 10;
-        };
+        const chatAllowed = createLimiter(10, 10000);
+        const gameAllowed = createLimiter(30, 5000);
+        const self = () => ({id: socket.id, name: socket.data.user.name});
 
         socket.on("join-room", (roomCode, ack) => {
             if(!isValidRoomCode(roomCode)) return reply(ack, {ok: false, error: "That meeting code isn't valid."});
@@ -60,7 +76,7 @@ const connectToSocket = (server) => {
 
             socket.join(roomCode);
             socket.to(roomCode).emit("peer-joined", participant);
-            reply(ack, {ok: true, self: participant, peers: result.peers, messages: result.messages});
+            reply(ack, {ok: true, self: participant, peers: result.peers, messages: result.messages, game: games.view(roomCode, socket.id)});
         });
 
         socket.on("signal", (toId, signalMessage) => {
@@ -90,6 +106,31 @@ const connectToSocket = (server) => {
                 screen: Boolean(state.screen)
             });
         });
+
+        // Game actions all reply through the ack, and on success everyone in the room gets the new state.
+        const onGameAction = (event, handler) => socket.on(event, (...args) => {
+            const ack = typeof args.at(-1) === "function" ? args.pop() : null;
+            const roomCode = rooms.roomOf(socket.id);
+            if(roomCode === undefined) return reply(ack, {ok: false, error: "Join the room first."});
+            if(!gameAllowed()) return reply(ack, {ok: false, error: "Slow down a little."});
+            let result;
+            try {
+                result = handler(roomCode, ...args);
+            } catch(err) {
+                console.error(`Game action ${event} failed`, err);
+                result = {ok: false, error: "Something went wrong with the game."};
+            }
+            if(result.ok) broadcastGame(roomCode);
+            reply(ack, result);
+        });
+
+        onGameAction("game-open", (roomCode, type, options) => games.open(roomCode, self(), type, options));
+        onGameAction("game-join", (roomCode) => games.join(roomCode, self()));
+        onGameAction("game-leave", (roomCode) => games.leave(roomCode, socket.id));
+        onGameAction("game-start", (roomCode) => games.start(roomCode, socket.id));
+        onGameAction("game-move", (roomCode, move) => games.move(roomCode, socket.id, move));
+        onGameAction("game-close", (roomCode) => games.close(roomCode, socket.id));
+        onGameAction("game-rematch", (roomCode) => games.rematch(roomCode, self()));
 
         socket.on("leave-room", () => leaveCurrentRoom(socket));
 
