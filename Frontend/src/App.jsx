@@ -14,5 +14,9 @@ export default function App() {
   if (route === 'signin' || route === 'signup' || route === 'forgot-password') {
     return <Authentication key={route} initialMode={route} />
   }
+  // Link from the password reset email: #reset-password/<token>
+  if (route.startsWith('reset-password/')) {
+    return <Authentication key={route} initialMode="reset-password" resetToken={route.slice('reset-password/'.length)} />
+  }
   return <LandingPage />
 }
