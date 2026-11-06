@@ -1,0 +1,14 @@
+{
+  "name": "Meetly – Free Video Meetings",
+  "short_name": "Meetly",
+  "description": "Free browser video calls for up to 6 people with screen sharing, chat and games.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf9ff",
+  "theme_color": "#4c3ce3",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
