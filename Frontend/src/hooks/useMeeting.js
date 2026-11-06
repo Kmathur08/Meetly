@@ -15,6 +15,7 @@ export default function useMeeting({ roomCode, localStream, enabled, mediaState 
   const [selfId, setSelfId] = useState(null)
   const [peers, setPeers] = useState({})
   const [messages, setMessages] = useState([])
+  const [game, setGame] = useState(null)
   const [status, setStatus] = useState('idle')
   const [error, setError] = useState('')
 
@@ -139,6 +140,7 @@ export default function useMeeting({ roomCode, localStream, enabled, mediaState 
       connections.forEach(({ pc }) => pc.close())
       connections.clear()
       setPeers({})
+      setGame(null)
     }
 
     const join = () => {
@@ -152,6 +154,7 @@ export default function useMeeting({ roomCode, localStream, enabled, mediaState 
         }
         setSelfId(reply.self.id)
         setMessages(reply.messages)
+        setGame(reply.game || null)
         // The newcomer is the impolite side, so existing members yield if both offer at once.
         reply.peers.forEach((peer) => createConnection(peer, false))
         socket.emit('media-state', mediaStateRef.current)
@@ -182,6 +185,7 @@ export default function useMeeting({ roomCode, localStream, enabled, mediaState 
     socket.on('peer-left', removePeer)
     socket.on('signal', handleSignal)
     socket.on('chat-message', (message) => setMessages((current) => [...current, message]))
+    socket.on('game-state', setGame)
 
     // Connect only once the TURN/STUN list is known, so the first peer connections already use it.
     api('ice-servers')
@@ -215,5 +219,12 @@ export default function useMeeting({ roomCode, localStream, enabled, mediaState 
 
   const sendMessage = useCallback((text) => socketRef.current?.emit('chat-message', text), [])
 
-  return { selfId, peers, messages, status, error, sendMessage, setScreenTrack }
+  // Sends a game action and resolves with the server's reply; the new game state arrives as 'game-state'.
+  const gameAction = useCallback((event, ...args) => new Promise((resolve) => {
+    const socket = socketRef.current
+    if (!socket?.connected) return resolve({ ok: false, error: 'You are offline. Reconnecting…' })
+    socket.timeout(8000).emit(event, ...args, (err, reply) => resolve(err ? { ok: false, error: 'The server didn’t answer. Try again.' } : reply))
+  }), [])
+
+  return { selfId, peers, messages, game, status, error, sendMessage, gameAction, setScreenTrack }
 }
