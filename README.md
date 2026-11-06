@@ -7,6 +7,7 @@ Meetly is a browser-based video meeting app for small teams. Sign in, start a ro
 - **Video and audio calls** over WebRTC, peer to peer, for up to 6 people per room
 - **Screen sharing** that everyone in the room sees, with a one-click switch back to your camera
 - **Room chat** with recent history for people who join late
+- **Games in the meeting**: Bingo, Zero & Cross, Zero & Cross: Vanishing (only three marks each; the oldest disappears), Dots & Houses and Word Search. One person opens a game, others join from the lobby, and anyone else in the room can watch. The server runs the rules, so Bingo cards stay private and moves can't be faked.
 - **Mute and camera indicators** on every participant's tile
 - **Accounts and meeting history**, with sessions that expire and a real sign-out
 - **Invite links**: paste a full link or just the room code to join
