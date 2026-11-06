@@ -5,7 +5,17 @@ import config, {iceServers} from "../config/env.js";
 import {Meeting} from "../models/meeting.model.js";
 import {Session} from "../models/session.model.js";
 import {createToken, hashToken} from "../utils/tokens.js";
-import {isValidName, isValidPassword, isValidRoomCode, isValidUsername, normalizeUsername} from "../utils/validate.js";
+import {isValidEmail, isValidName, isValidPassword, isValidRoomCode, isValidUsername, normalizeEmail, normalizeUsername} from "../utils/validate.js";
+import {mailConfigured, passwordResetEmail, sendMail} from "../utils/mailer.js";
+
+const RESET_MINUTES = 30;
+// One reset email per account per minute, so the form can't be used to flood someone's inbox.
+const RESET_RESEND_MS = 60 * 1000;
+
+const emailTaken = async (email, exceptUserId) => {
+    const owner = await User.findOne({email});
+    return Boolean(owner && !owner._id.equals(exceptUserId));
+};
 
 
 const login = async (req, res) => {
@@ -31,9 +41,14 @@ const login = async (req, res) => {
 const register =  async (req, res) => {
     const {name, password} = req.body;
     const username = normalizeUsername(req.body.username);
+    const email = normalizeEmail(req.body.email);
 
-    if(!name || !username || !password) {
-        return res.status(httpStatus.BAD_REQUEST).json({message: "Name, username, and password are required"});
+    if(!name || !username || !password || !email) {
+        return res.status(httpStatus.BAD_REQUEST).json({message: "Name, email, username, and password are required"});
+    }
+
+    if(!isValidEmail(email)) {
+        return res.status(httpStatus.BAD_REQUEST).json({message: "Please enter a valid email address"});
     }
 
     if(!isValidName(name)) {
@@ -51,12 +66,14 @@ const register =  async (req, res) => {
     const existingUser = await User.findOne({username}).collation({locale: "en", strength: 2});
 
     if(existingUser) return res.status(httpStatus.CONFLICT).json({message: "That username is already taken"});
+    if(await emailTaken(email)) return res.status(httpStatus.CONFLICT).json({message: "That email is already used by another account"});
 
     const hashpassword = await bcrypt.hash(password, 10);
 
     const newuser = new User({
         name : name.trim(),
         username : username,
+        email : email,
         password : hashpassword
     });
 
@@ -64,9 +81,74 @@ const register =  async (req, res) => {
     return res.status(httpStatus.CREATED).json({message: "User registered successfully"});
 }
 
+// Always gives the same answer whether or not the account exists, so the form can't be used
+// to find out which usernames or emails are registered.
+const RESET_SENT_MESSAGE = `If that account has an email address, a reset link is on its way. Check your inbox and spam folder; the link works for ${RESET_MINUTES} minutes.`;
+
 const forgotPassword = async (req, res) => {
-    // No mail provider is wired up yet, so say so plainly instead of promising an email that never arrives.
-    return res.status(httpStatus.NOT_IMPLEMENTED).json({message: "Password reset isn't available yet. Please contact the Meetly team to recover your account."});
+    const account = typeof req.body.account === "string" ? req.body.account.trim() : "";
+    if(!account) return res.status(httpStatus.BAD_REQUEST).json({message: "Enter your username or email"});
+
+    if(!mailConfigured() && process.env.NODE_ENV === "production") {
+        console.error("Password reset requested but BREVO_API_KEY / MAIL_FROM are not set");
+        return res.status(httpStatus.SERVICE_UNAVAILABLE).json({message: "Password reset emails aren't set up on the server yet. Please try again later."});
+    }
+
+    const user = account.includes("@")
+        ? await User.findOne({email: normalizeEmail(account)})
+        : await User.findOne({username: normalizeUsername(account)}).collation({locale: "en", strength: 2});
+
+    const recentlySent = user?.resetSentAt && Date.now() - user.resetSentAt.getTime() < RESET_RESEND_MS;
+    if(!user?.email || recentlySent) return res.status(httpStatus.OK).json({message: RESET_SENT_MESSAGE});
+
+    const token = createToken();
+    user.resetTokenHash = hashToken(token);
+    user.resetExpiresAt = new Date(Date.now() + RESET_MINUTES * 60 * 1000);
+    user.resetSentAt = new Date();
+    await user.save();
+
+    const link = `${config.appUrl}/#reset-password/${token}`;
+    try {
+        await sendMail({to: user.email, toName: user.name, ...passwordResetEmail({name: user.name, link, minutes: RESET_MINUTES})});
+    } catch(error) {
+        console.error("Password reset email failed:", error.message);
+        // Let them try again straight away instead of waiting out the resend limit.
+        user.resetSentAt = undefined;
+        await user.save();
+        return res.status(httpStatus.BAD_GATEWAY).json({message: "We couldn't send the email just now. Please try again in a few minutes."});
+    }
+    return res.status(httpStatus.OK).json({message: RESET_SENT_MESSAGE});
+}
+
+const resetPassword = async (req, res) => {
+    const {token, password} = req.body;
+    if(typeof token !== "string" || !/^[a-f0-9]{64}$/.test(token)) {
+        return res.status(httpStatus.BAD_REQUEST).json({message: "This reset link isn't valid. Request a new one."});
+    }
+    if(!isValidPassword(password)) return res.status(httpStatus.BAD_REQUEST).json({message: "Password must be 8-72 characters"});
+
+    const user = await User.findOne({resetTokenHash: hashToken(token), resetExpiresAt: {$gt: new Date()}});
+    if(!user) return res.status(httpStatus.BAD_REQUEST).json({message: "This reset link has expired or was already used. Request a new one."});
+
+    user.password = await bcrypt.hash(password, 10);
+    user.resetTokenHash = undefined;
+    user.resetExpiresAt = undefined;
+    user.resetSentAt = undefined;
+    await user.save();
+    // Whoever knew the old password is signed out everywhere.
+    await Session.deleteMany({user: user._id});
+    return res.status(httpStatus.OK).json({message: "Your password has been changed. Sign in with your new password."});
+}
+
+// Lets accounts created before emails were collected add one, so they can recover their password too.
+const updateEmail = async (req, res) => {
+    const email = normalizeEmail(req.body.email);
+    if(!isValidEmail(email)) return res.status(httpStatus.BAD_REQUEST).json({message: "Please enter a valid email address"});
+    if(await emailTaken(email, req.user._id)) return res.status(httpStatus.CONFLICT).json({message: "That email is already used by another account"});
+
+    req.user.email = email;
+    await req.user.save();
+    return res.status(httpStatus.OK).json({message: "Email saved. You can now reset your password by email.", email});
 }
 
 const logout = async (req, res) => {
@@ -76,7 +158,7 @@ const logout = async (req, res) => {
 
 const getProfile = async (req, res) => {
     return res.status(httpStatus.OK).json({
-        user: {name: req.user.name, username: req.user.username}
+        user: {name: req.user.name, username: req.user.username, email: req.user.email || null}
     });
 };
 
@@ -101,4 +183,4 @@ const getIceServers = async (req, res) => {
     return res.status(httpStatus.OK).json({iceServers: iceServers()});
 };
 
-export {getIceServers, login, register, logout, forgotPassword, getProfile, addActivity, getAllActivity};
+export {getIceServers, login, register, logout, forgotPassword, resetPassword, updateEmail, getProfile, addActivity, getAllActivity};

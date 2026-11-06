@@ -164,3 +164,48 @@
   font-size: 13px;
   font-weight: 600;
 }
+
+.email-card {
+  margin: 0 0 36px;
+  display: grid;
+  grid-template-columns: 1fr minmax(200px, 280px) auto;
+  align-items: center;
+  gap: 14px 18px;
+  padding: 18px 22px;
+  border: 1px solid #f1d9a6;
+  border-radius: 14px;
+  background: #fff8e8;
+}
+.email-card strong {
+  font-size: 14px;
+}
+.email-card p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.email-card input {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 11px 13px;
+  background: #fff;
+}
+.email-card .email-status {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.email-status.error {
+  color: #c4385b;
+}
+.email-saved {
+  margin: 0 0 24px;
+  color: #0c6b4c;
+  font-size: 13px;
+  font-weight: 600;
+}
+@media (max-width: 760px) {
+  .email-card {
+    grid-template-columns: 1fr;
+  }
+}
