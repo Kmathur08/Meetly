@@ -20,4 +20,6 @@ export default [
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
+  // Build-time entry for pre-rendering; it is never hot-reloaded in the browser.
+  { files: ['src/prerender.jsx'], rules: { 'react-refresh/only-export-components': 'off' } },
 ]
