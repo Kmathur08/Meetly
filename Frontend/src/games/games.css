@@ -1,0 +1,476 @@
+.game-panel {
+  position: fixed;
+  top: 96px;
+  right: 24px;
+  bottom: 88px;
+  width: min(420px, calc(100% - 32px));
+  background: #fff;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(23, 21, 45, 0.2);
+  display: flex;
+  flex-direction: column;
+  z-index: 5;
+  overflow: hidden;
+}
+.game-body {
+  flex: 1;
+  overflow: auto;
+  padding: 16px 18px 20px;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+.game-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.game-link {
+  justify-self: start;
+  border: 0;
+  background: none;
+  padding: 4px 0;
+  color: var(--purple);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+.game-link.danger {
+  color: #c4385b;
+}
+.game-link:disabled,
+.game-panel .button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.game-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: none;
+  border-radius: 12px;
+  background: var(--soft);
+  font-size: 21px;
+}
+
+/* Picker */
+.game-picker {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.game-picker button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.game-picker button:hover {
+  border-color: var(--purple);
+  background: #faf9ff;
+}
+.game-picker b,
+.game-picker small {
+  display: block;
+}
+.game-picker b {
+  font-size: 14px;
+}
+.game-picker small,
+.game-intro small {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+.game-intro {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+}
+.game-intro h3 {
+  margin: 4px 0 0;
+  font: 700 20px "Space Grotesk", sans-serif;
+}
+.game-intro p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.game-option {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.game-option legend {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.game-option button {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.game-option button.chosen {
+  border-color: var(--purple);
+  background: var(--purple);
+  color: #fff;
+}
+.game-main {
+  justify-self: start;
+}
+
+/* Lobby */
+.game-subhead {
+  margin: 4px 0 0;
+  font-size: 12px;
+}
+.game-lobby {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.game-lobby li {
+  display: flex;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+.game-lobby small {
+  color: var(--purple);
+  font-weight: 700;
+}
+.game-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+
+/* Status and scores */
+.game-status {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--soft);
+  font-weight: 700;
+  font-size: 14px;
+  display: grid;
+  gap: 2px;
+}
+.game-status.mine {
+  background: var(--purple);
+  color: #fff;
+}
+.game-status.done {
+  background: #e3f9ef;
+  color: #0c6b4c;
+}
+.game-status small {
+  font-weight: 500;
+  opacity: 0.8;
+}
+.game-scores {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+.game-scores li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+.game-scores li.turn {
+  background: var(--soft);
+}
+.game-scores li.gone {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+.game-scores i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.game-scores span {
+  margin-left: auto;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+/* Zero & Cross */
+.ttt-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  width: min(100%, 300px);
+  justify-self: center;
+}
+.ttt-cell {
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 12px;
+  background: var(--soft);
+  color: var(--ink);
+  font-size: 46px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.2s;
+}
+.ttt-cell:not(:disabled):hover {
+  background: #dfe1fb;
+}
+.ttt-cell:disabled {
+  cursor: default;
+}
+.ttt-mark {
+  width: 62%;
+  height: 62%;
+  display: block;
+  margin: auto;
+}
+.ttt-cell.vanishing {
+  opacity: 0.35;
+}
+.ttt-cell.winning {
+  background: #e3f9ef;
+}
+
+/* Bingo */
+.bingo {
+  display: grid;
+  gap: 12px;
+}
+.bingo-called {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.bingo-last {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--night);
+  color: #fff;
+  font: 700 20px "Space Grotesk", sans-serif;
+}
+.bingo-letters {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  width: min(100%, 320px);
+  justify-self: center;
+}
+.bingo-letters span {
+  text-align: center;
+  font: 700 22px "Space Grotesk", sans-serif;
+  color: #cfcde0;
+  transition: color 0.2s;
+}
+.bingo-letters span.lit {
+  color: var(--purple);
+  text-decoration: line-through;
+}
+.bingo-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  width: min(100%, 320px);
+  justify-self: center;
+}
+.bingo-cell {
+  position: relative;
+  aspect-ratio: 1;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 17px;
+  cursor: pointer;
+}
+.bingo-cell:not(:disabled):hover {
+  border-color: var(--purple);
+  background: var(--soft);
+}
+.bingo-cell:disabled {
+  cursor: default;
+}
+.bingo-cell.crossed {
+  background: var(--soft);
+  color: #8a87a0;
+}
+/* A light cross over the number, so it stays readable once called. */
+.bingo-cell.crossed::after {
+  content: "";
+  position: absolute;
+  inset: 16%;
+  opacity: 0.35;
+  background: linear-gradient(45deg, transparent 47%, var(--purple) 47%, var(--purple) 53%, transparent 53%),
+    linear-gradient(-45deg, transparent 47%, var(--purple) 47%, var(--purple) 53%, transparent 53%);
+}
+.bingo-cell.in-line {
+  background: #ebe8ff;
+  color: var(--purple);
+}
+.bingo-cell.last {
+  box-shadow: 0 0 0 2px var(--green);
+}
+.bingo-reveal summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--purple);
+}
+.bingo-reveal > div {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+/* Dots & Houses */
+.dots {
+  display: grid;
+  gap: 12px;
+}
+.dots-board {
+  width: min(100%, 340px);
+  justify-self: center;
+  touch-action: manipulation;
+}
+.dot {
+  fill: var(--night);
+}
+.dot-ghost {
+  stroke: #dcdbe8;
+  stroke-width: 3;
+  stroke-dasharray: 2 6;
+  stroke-linecap: round;
+}
+.dot-slot.open {
+  cursor: pointer;
+}
+.dot-slot.open:hover .dot-ghost {
+  stroke: var(--purple);
+  stroke-dasharray: none;
+  stroke-width: 5;
+  opacity: 0.5;
+}
+
+/* Word search */
+.words {
+  display: grid;
+  gap: 12px;
+}
+.words-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--size), 1fr);
+  width: min(100%, 360px);
+  justify-self: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 4px;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+.words-grid.active {
+  cursor: pointer;
+}
+.words-grid.miss {
+  animation: words-shake 0.35s;
+}
+.words-cell {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: 6px;
+  font-size: clamp(11px, 3.2vw, 15px);
+  font-weight: 700;
+}
+.words-cell.found {
+  background: color-mix(in srgb, var(--found) 22%, #fff);
+  color: var(--found);
+}
+.words-cell.selecting {
+  background: var(--purple);
+  color: #fff;
+}
+.words-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.words-list li {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--soft);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.words-list li.found {
+  background: color-mix(in srgb, var(--found) 18%, #fff);
+  color: var(--found);
+  text-decoration: line-through;
+}
+@keyframes words-shake {
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Leave room for the panel beside the videos on wide screens. */
+@media (min-width: 1100px) {
+  .meeting-room.games-open .meeting-stage {
+    width: min(1200px, calc(100% - 492px));
+    margin-left: 24px;
+  }
+}
+@media (max-width: 640px) {
+  .game-panel {
+    top: 12px;
+    right: 8px;
+    left: 8px;
+    bottom: 76px;
+    width: auto;
+  }
+}
