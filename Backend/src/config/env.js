@@ -9,6 +9,13 @@ const config = {
     // Empty list means "any origin", which keeps local development working without extra setup.
     clientOrigins: splitList(process.env.CLIENT_ORIGIN),
     sessionDays: Number(process.env.SESSION_DAYS) || 7,
+    // Where links in emails point. Falls back to the first allowed frontend origin.
+    appUrl: (process.env.APP_URL || splitList(process.env.CLIENT_ORIGIN)[0] || "http://localhost:5173").replace(/\/+$/, ""),
+    mail: {
+        brevoApiKey: process.env.BREVO_API_KEY,
+        from: process.env.MAIL_FROM,
+        fromName: process.env.MAIL_FROM_NAME || "Meetly",
+    },
     turn: {
         urls: splitList(process.env.TURN_URLS),
         username: process.env.TURN_USERNAME,
