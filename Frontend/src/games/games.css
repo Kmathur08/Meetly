@@ -474,3 +474,102 @@
     width: auto;
   }
 }
+
+/* ---------- Dark theme inside the meeting room ---------- */
+.meeting-room .game-panel {
+  --purple-soft: rgba(124, 106, 255, 0.18);
+}
+.meeting-room .game-picker button,
+.meeting-room .game-option button,
+.meeting-room .bingo-cell {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+}
+.meeting-room .game-picker button:hover,
+.meeting-room .bingo-cell:not(:disabled):hover {
+  background: var(--purple-soft);
+  border-color: #8b7bff;
+}
+.meeting-room .game-icon {
+  background: rgba(255, 255, 255, 0.08);
+}
+.meeting-room .game-picker b {
+  color: #fff;
+}
+.meeting-room .game-link,
+.meeting-room .game-lobby small,
+.meeting-room .bingo-letters span.lit,
+.meeting-room .bingo-reveal summary {
+  color: #b3a6ff;
+}
+.meeting-room .game-link.danger {
+  color: #ff8ea3;
+}
+.meeting-room .game-option button.chosen {
+  background: var(--purple);
+  color: #fff;
+}
+.meeting-room .game-status.done,
+.meeting-room .ttt-cell.winning {
+  background: rgba(49, 217, 155, 0.15);
+  color: #6be8b8;
+}
+.meeting-room .ttt-cell:not(:disabled):hover {
+  background: var(--purple-soft);
+}
+.meeting-room .bingo-letters span {
+  color: #4d4a66;
+}
+.meeting-room .bingo-last {
+  background: var(--purple);
+}
+.meeting-room .bingo-cell.crossed {
+  color: #77748f;
+}
+.meeting-room .bingo-cell.in-line {
+  background: var(--purple-soft);
+  color: #c9c0ff;
+}
+.meeting-room .words-cell.found {
+  background: color-mix(in srgb, var(--found) 26%, #201e33);
+  color: color-mix(in srgb, var(--found) 60%, #fff);
+}
+.meeting-room .words-list li.found {
+  background: color-mix(in srgb, var(--found) 24%, #201e33);
+  color: color-mix(in srgb, var(--found) 60%, #fff);
+}
+.meeting-room .game-panel ::-webkit-scrollbar {
+  width: 8px;
+}
+.meeting-room .game-panel ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+}
+.meeting-room .game-panel ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.meeting-room .dot {
+  fill: #e4e1f5;
+}
+.meeting-room .dot-ghost {
+  stroke: rgba(255, 255, 255, 0.16);
+}
+.meeting-room .dot-slot.open:hover .dot-ghost {
+  stroke: #9a89ff;
+  opacity: 0.7;
+}
+
+/* Game tile artwork (GameIcon.jsx) */
+.game-icon,
+.meeting-room .game-icon {
+  width: auto;
+  height: auto;
+  background: none;
+  border-radius: 13px;
+  flex: none;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+  transition: transform 0.18s ease;
+}
+.game-picker button:hover .game-icon {
+  transform: translateY(-1px) scale(1.04);
+}

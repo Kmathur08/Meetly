@@ -3,28 +3,24 @@ export const GAMES = [
   {
     id: 'bingo',
     name: 'Bingo',
-    icon: '🎱',
     players: '2–6 players',
     blurb: 'Everyone gets a 5×5 card of 1–25. Call numbers in turn; first to cross 5 lines shouts BINGO.',
   },
   {
     id: 'tic-tac-toe',
     name: 'Zero & Cross',
-    icon: '⭕',
     players: '2 players',
     blurb: 'The classic. Get three in a row before your friend does.',
   },
   {
     id: 'tic-tac-toe-fading',
     name: 'Zero & Cross: Vanishing',
-    icon: '✖️',
     players: '2 players',
     blurb: 'Only three marks each. Your fourth move wipes out your oldest one, so nobody can draw.',
   },
   {
     id: 'dots-and-boxes',
     name: 'Dots & Houses',
-    icon: '🏠',
     players: '2–4 players',
     blurb: 'Join two dots per turn. Close the fourth side of a box to build a house and go again.',
     option: { key: 'dots', label: 'Board', choices: [4, 5, 6, 7].map((dots) => ({ value: dots, label: `${dots}×${dots} dots` })), initial: 5 },
@@ -32,7 +28,6 @@ export const GAMES = [
   {
     id: 'word-search',
     name: 'Word Search',
-    icon: '🔤',
     players: '1–6 players',
     blurb: 'One shared grid. Drag across a hidden word to claim it before anyone else.',
     option: {

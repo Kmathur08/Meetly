@@ -4,6 +4,7 @@ import BingoBoard from './BingoBoard'
 import DotsBoard from './DotsBoard'
 import TicTacToeBoard from './TicTacToeBoard'
 import WordSearchBoard from './WordSearchBoard'
+import GameIcon from './GameIcon'
 import { GAMES, gameById, nameOf, statusText } from './catalog'
 
 const BOARDS = {
@@ -24,7 +25,7 @@ function Picker({ onOpen, busy }) {
     const current = value ?? option?.initial
     return <div className="game-body">
       <button className="game-link" onClick={() => setChosen(null)}>← All games</button>
-      <div className="game-intro"><span className="game-icon">{game.icon}</span><h3>{game.name}</h3><p>{game.blurb}</p><small>{game.players}</small></div>
+      <div className="game-intro"><GameIcon id={game.id} size={52} /><h3>{game.name}</h3><p>{game.blurb}</p><small>{game.players}</small></div>
       {option && <fieldset className="game-option">
         <legend>{option.label}</legend>
         {option.choices.map((choice) => <button key={choice.value} className={choice.value === current ? 'chosen' : ''} onClick={() => setValue(choice.value)}>{choice.label}</button>)}
@@ -38,7 +39,7 @@ function Picker({ onOpen, busy }) {
     <ul className="game-picker">
       {GAMES.map((item) => <li key={item.id}>
         <button onClick={() => { setChosen(item.id); setValue(null) }}>
-          <span className="game-icon">{item.icon}</span>
+          <GameIcon id={item.id} />
           <span><b>{item.name}</b><small>{item.players}</small></span>
         </button>
       </li>)}
@@ -54,7 +55,7 @@ function Lobby({ game, selfId, act, busy }) {
   const info = gameById(game.type)
 
   return <div className="game-body">
-    <div className="game-intro"><span className="game-icon">{info?.icon}</span><h3>{game.name}</h3><p>{info?.blurb}</p></div>
+    <div className="game-intro"><GameIcon id={game.type} size={52} /><h3>{game.name}</h3><p>{info?.blurb}</p></div>
     <h4 className="game-subhead">Players · {game.players.length} of {game.maxPlayers}</h4>
     <ul className="game-lobby">
       {game.players.map((player) => <li key={player.id}>{nameOf(game.players, player.id, selfId)}{player.id === game.hostId && <small>host</small>}</li>)}

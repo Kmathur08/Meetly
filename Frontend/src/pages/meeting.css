@@ -236,3 +236,157 @@
 .meeting-room .chat-panel {
   color: var(--ink);
 }
+
+/* ---------- Empty room ---------- */
+.meeting-room .stage-empty h1 {
+  font: 700 clamp(22px, 2.6vw, 30px) / 1.2 "Space Grotesk", sans-serif;
+  letter-spacing: -0.4px;
+  margin: 0 0 8px;
+}
+.meeting-room .stage-empty p {
+  margin: 0 0 18px;
+}
+/* Alone in the room: shrink your own tile and put the invite card under it instead of on top of the avatar. */
+.meeting-room .meeting-stage.people-1 {
+  justify-items: center;
+}
+.meeting-room .meeting-stage.people-1 .video-tile {
+  max-width: 760px;
+  max-height: calc(100vh - 430px);
+  min-height: 220px;
+}
+.meeting-stage.people-1 .stage-empty {
+  position: static;
+  inset: auto;
+  max-width: 460px;
+  padding: 22px 26px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ---------- Control bar ---------- */
+.meeting-room .meeting-controls {
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+  background: rgba(36, 34, 56, 0.92);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  max-width: calc(100% - 24px);
+  z-index: 4;
+}
+.meeting-room .meeting-controls button {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  min-width: 72px;
+  padding: 9px 10px 8px;
+  border-radius: 14px;
+  color: #e9e7f5;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.meeting-room .meeting-controls button span {
+  margin: 0;
+}
+.meeting-room .meeting-controls button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+.meeting-room .meeting-controls button:focus-visible {
+  outline: 2px solid #9a89ff;
+  outline-offset: 2px;
+}
+.meeting-room .meeting-controls .control-icon {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.meeting-room .meeting-controls button.off {
+  background: rgba(240, 86, 116, 0.16);
+  color: #ff9db0;
+}
+.meeting-room .meeting-controls button.off:hover:not(:disabled) {
+  background: rgba(240, 86, 116, 0.24);
+}
+.meeting-room .meeting-controls .leave-control {
+  background: #e5484d;
+  color: #fff;
+}
+.meeting-room .meeting-controls .leave-control:hover:not(:disabled) {
+  background: #d13a3f;
+}
+.meeting-room .meeting-controls .leave-control .control-icon {
+  fill: currentColor;
+  stroke: none;
+}
+.control-divider {
+  width: 1px;
+  height: 34px;
+  margin: 0 4px;
+  background: rgba(255, 255, 255, 0.12);
+}
+.meeting-room .meeting-controls .unread-badge {
+  position: absolute;
+  top: 3px;
+  right: 12px;
+  margin: 0;
+}
+@media (max-width: 640px) {
+  .meeting-room .meeting-controls {
+    bottom: 12px;
+    gap: 2px;
+    padding: 6px;
+  }
+  .meeting-room .meeting-controls button {
+    min-width: 0;
+    padding: 10px;
+  }
+  .meeting-room .meeting-controls button span {
+    display: none;
+  }
+  .control-divider {
+    display: none;
+  }
+  .meeting-room .meeting-controls .unread-badge {
+    top: 0;
+    right: 0;
+  }
+}
+
+/* ---------- Side panels (chat + games) in the dark room ---------- */
+.meeting-room .chat-panel,
+.meeting-room .game-panel {
+  --ink: #f1effa;
+  --muted: #a6a3bd;
+  --line: rgba(255, 255, 255, 0.09);
+  --soft: rgba(255, 255, 255, 0.06);
+  background: #201e33;
+  color: var(--ink);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+}
+.meeting-room .chat-heading button,
+.meeting-room .game-panel .chat-heading button {
+  color: var(--muted);
+}
+.meeting-room .chat-heading button:hover {
+  color: #fff;
+}
+.meeting-room .chat-form input {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--ink);
+}
+.meeting-room .chat-form input::placeholder {
+  color: var(--muted);
+}
+.meeting-room .chat-message b {
+  color: #b3a6ff;
+}
