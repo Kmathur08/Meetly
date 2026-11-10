@@ -175,3 +175,57 @@
   line-height: 1.55;
   text-align: center;
 }
+
+/* Required markers */
+.req {
+  color: #d23a5c;
+  font-weight: 700;
+  margin-left: 1px;
+}
+.auth-required-note {
+  margin: -8px 0 -4px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: right;
+}
+
+/* Show / hide password */
+.password-field {
+  position: relative;
+  display: block;
+}
+.password-field input {
+  padding-right: 48px;
+}
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.password-toggle:hover {
+  color: var(--purple);
+  background: var(--soft);
+}
+.password-toggle:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 1px;
+}
+.password-toggle svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
