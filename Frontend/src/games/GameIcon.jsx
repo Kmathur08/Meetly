@@ -4,6 +4,7 @@ const TILES = {
   'tic-tac-toe': ['#3b82f6', '#6366f1'],
   'tic-tac-toe-fading': ['#a855f7', '#ec4899'],
   'dots-and-boxes': ['#f59e0b', '#f97316'],
+  'fence-race': ['#ef4444', '#db2777'],
   'word-search': ['#14b8a6', '#22c55e'],
 }
 
@@ -33,6 +34,12 @@ const ART = {
     <rect x="13" y="13" width="11" height="11" fill="#fff" fillOpacity=".35" stroke="none" />
     <path d="M13 13h11v11H13zM24 13h11M35 24v11M13 35h11" stroke="#fff" strokeWidth="2.2" />
     {[13, 24, 35].flatMap((y) => [13, 24, 35].map((x) => <circle key={`${x}${y}`} cx={x} cy={y} r="2.4" fill="#fff" stroke="none" />))}
+  </>,
+  // Fence Race: a grid of squares, two fences and a pawn heading for the top edge.
+  'fence-race': <>
+    {[12, 20.5, 29].flatMap((y) => [12, 20.5, 29].map((x) => <rect key={`${x}${y}`} x={x} y={y} width="7" height="7" rx="1.6" fill="#fff" fillOpacity=".35" stroke="none" />))}
+    <path d="M12 9.5h15.5M38.5 20.5v15.5" stroke="#fff" strokeWidth="2.6" />
+    <circle cx="24" cy="24" r="3.6" fill="#fff" stroke="none" />
   </>,
   // Word Search: a letter grid with a found word highlighted.
   'word-search': <>

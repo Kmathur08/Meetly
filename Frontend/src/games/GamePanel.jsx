@@ -2,9 +2,11 @@ import { useState } from 'react'
 import './games.css'
 import BingoBoard from './BingoBoard'
 import DotsBoard from './DotsBoard'
+import FenceBoard from './FenceBoard'
 import TicTacToeBoard from './TicTacToeBoard'
 import WordSearchBoard from './WordSearchBoard'
 import GameIcon from './GameIcon'
+import Scoreboard from './Scoreboard'
 import { GAMES, gameById, nameOf, statusText } from './catalog'
 
 const BOARDS = {
@@ -12,10 +14,11 @@ const BOARDS = {
   'tic-tac-toe': TicTacToeBoard,
   'tic-tac-toe-fading': TicTacToeBoard,
   'dots-and-boxes': DotsBoard,
+  'fence-race': FenceBoard,
   'word-search': WordSearchBoard,
 }
 
-function Picker({ onOpen, busy }) {
+function Picker({ onOpen, busy, tally }) {
   const [chosen, setChosen] = useState(null)
   const [value, setValue] = useState(null)
   const game = gameById(chosen)
@@ -35,6 +38,7 @@ function Picker({ onOpen, busy }) {
   }
 
   return <div className="game-body">
+    {tally}
     <p className="game-hint">Pick a game. Everyone in the room gets an invite to join.</p>
     <ul className="game-picker">
       {GAMES.map((item) => <li key={item.id}>
@@ -47,7 +51,7 @@ function Picker({ onOpen, busy }) {
   </div>
 }
 
-function Lobby({ game, selfId, act, busy }) {
+function Lobby({ game, selfId, act, busy, tally }) {
   const joined = game.players.some((player) => player.id === selfId)
   const isHost = game.hostId === selfId
   const missing = game.minPlayers - game.players.length
@@ -69,10 +73,11 @@ function Lobby({ game, selfId, act, busy }) {
       {joined && !isHost && <button className="game-link" disabled={busy} onClick={() => act('game-leave')}>Step out</button>}
       {isHost && <button className="game-link" disabled={busy} onClick={() => act('game-close')}>Cancel game</button>}
     </div>
+    {tally}
   </div>
 }
 
-export default function GamePanel({ game, selfId, onAction, onClose, onNotice }) {
+export default function GamePanel({ game, scoreboard, selfId, onAction, onClose, onNotice }) {
   const [busy, setBusy] = useState(false)
 
   const act = async (event, args = [], { quiet = false } = {}) => {
@@ -87,13 +92,15 @@ export default function GamePanel({ game, selfId, onAction, onClose, onNotice })
   const board = game?.board
   const watching = board && !board.players.some((player) => player.id === selfId && !player.gone)
   const isHost = game?.hostId === selfId
+  // The room's running win tally: shown between games, not while a board needs the space.
+  const tally = <Scoreboard scoreboard={scoreboard} busy={busy} onVote={(agree) => act('scores-reset', [agree])} />
 
   return <aside className="game-panel" aria-label="Games">
-    <div className="chat-heading"><strong>{game ? game.name : 'Games'}</strong><button onClick={onClose} aria-label="Close games">×</button></div>
+    <div className="game-heading"><strong>{game ? game.name : 'Games'}</strong><button onClick={onClose} aria-label="Close games">×</button></div>
 
-    {!game && <Picker busy={busy} onOpen={(type, options) => act('game-open', [type, options])} />}
+    {!game && <Picker busy={busy} tally={tally} onOpen={(type, options) => act('game-open', [type, options])} />}
 
-    {game?.phase === 'lobby' && <Lobby game={game} selfId={selfId} act={(event) => act(event)} busy={busy} />}
+    {game?.phase === 'lobby' && <Lobby game={game} selfId={selfId} act={(event) => act(event)} busy={busy} tally={tally} />}
 
     {board && Board && <div className="game-body">
       <p className={`game-status${board.finished ? ' done' : board.current === selfId ? ' mine' : ''}`} aria-live="polite">
@@ -110,6 +117,7 @@ export default function GamePanel({ game, selfId, onAction, onClose, onNotice })
           </>
           : isHost && <button className="game-link danger" disabled={busy} onClick={() => act('game-close')}>End game for everyone</button>}
       </div>
+      {board.finished && tally}
     </div>}
   </aside>
 }

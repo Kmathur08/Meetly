@@ -207,3 +207,53 @@ test("game sessions: only the host ends a running game, anyone closes a finished
     assert.equal(games.close("r", "a").ok, true);
     assert.equal(games.view("r", "a"), null);
 });
+
+test("fence race: pawns step, jump and win on reaching the far side", () => {
+    const game = GAMES["fence-race"];
+    const state = game.create([A, B], {size: 7});
+    assert.deepEqual(state.pawns, [[6, 3], [0, 3]]);
+    assert.equal(game.move(state, "a", {type: "step", r: 4, c: 3}).ok, false);
+    play(game, state, [
+        ["a", {type: "step", r: 5, c: 3}], ["b", {type: "step", r: 1, c: 3}],
+        ["a", {type: "step", r: 4, c: 3}], ["b", {type: "step", r: 2, c: 3}],
+        ["a", {type: "step", r: 3, c: 3}]
+    ]);
+    // Ben is face to face with Asha, so he can jump straight over her.
+    assert.ok(game.view(state).steps.some(([r, c]) => r === 4 && c === 3));
+    play(game, state, [["b", {type: "step", r: 4, c: 3}], ["a", {type: "step", r: 2, c: 3}],
+        ["b", {type: "step", r: 5, c: 3}], ["a", {type: "step", r: 1, c: 3}], ["b", {type: "step", r: 6, c: 3}]]);
+    assert.equal(state.finished, true);
+    assert.deepEqual(state.winners, ["b"]);
+});
+
+test("fence race: fences block, can't overlap, and can't shut anyone in", () => {
+    const game = GAMES["fence-race"];
+    const state = game.create([A, B], {size: 7});
+    play(game, state, [["a", {type: "fence", kind: "h", r: 4, c: 2}]]);
+    assert.equal(state.players[0].fences, 5);
+    // Overlapping along its length, or crossing it, is refused.
+    assert.equal(game.move(state, "b", {type: "fence", kind: "h", r: 4, c: 3}).ok, false);
+    assert.equal(game.move(state, "b", {type: "fence", kind: "v", r: 4, c: 2}).ok, false);
+    // A fence right above Asha stops her stepping up.
+    play(game, state, [["b", {type: "fence", kind: "h", r: 5, c: 3}]]);
+    assert.equal(game.move(state, "a", {type: "step", r: 5, c: 3}).ok, false);
+
+    // Close Asha in the bottom-right corner pocket bit by bit; the last fence must be refused.
+    const boxed = game.create([A, B], {size: 7});
+    boxed.pawns[0] = [6, 6];
+    play(game, boxed, [["a", {type: "fence", kind: "h", r: 4, c: 5}], ["b", {type: "step", r: 1, c: 3}]]);
+    const result = game.move(boxed, "a", {type: "fence", kind: "v", r: 5, c: 4});
+    assert.equal(result.ok, false);
+    assert.match(result.error, /shut someone in/);
+});
+
+test("fence race: a player leaving ends a two-player race", () => {
+    const game = GAMES["fence-race"];
+    const state = game.create([A, B, C]);
+    assert.equal(state.players[0].fences, 7);
+    assert.deepEqual(state.goals[2], {axis: "c", line: 8});
+    game.removePlayer(state, "c");
+    assert.equal(state.finished, false);
+    game.removePlayer(state, "b");
+    assert.deepEqual(state.winners, ["a"]);
+});

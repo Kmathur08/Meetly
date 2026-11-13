@@ -4,6 +4,7 @@ import {findSession} from "../middleware/auth.js";
 import {isValidRoomCode} from "../utils/validate.js";
 import {createGameRegistry} from "./games.js";
 import {createRoomRegistry} from "./rooms.js";
+import {createScoreboard} from "./scoreboard.js";
 
 const MAX_CHAT_LENGTH = 500;
 
@@ -31,11 +32,24 @@ const connectToSocket = (server) => {
         maxHttpBufferSize: 64 * 1024
     });
     const rooms = createRoomRegistry();
-    const games = createGameRegistry();
+    const scores = createScoreboard();
+    const games = createGameRegistry({onResult: scores.record});
 
-    // Every member gets their own view: a Bingo card, for example, is only sent to its owner.
+    // Account ids of the people in a room (members are tracked by connection).
+    const userIdOf = (socketId) => io.sockets.sockets.get(socketId)?.data.user?.id;
+    const presentUsers = (roomCode) => rooms.peersOf(roomCode).map((member) => userIdOf(member.id)).filter(Boolean);
+    const scoreView = (roomCode, socketId) => scores.view(roomCode, userIdOf(socketId), presentUsers(roomCode));
+
+    // Every member gets their own view: a Bingo card, for example, is only sent to its owner,
+    // and the scoreboard marks which row is theirs.
     const broadcastGame = (roomCode) => {
-        for(const member of rooms.peersOf(roomCode)) io.to(member.id).emit("game-state", games.view(roomCode, member.id));
+        for(const member of rooms.peersOf(roomCode)) {
+            io.to(member.id).emit("game-state", games.view(roomCode, member.id));
+            io.to(member.id).emit("scoreboard", scoreView(roomCode, member.id));
+        }
+    };
+    const broadcastScores = (roomCode) => {
+        for(const member of rooms.peersOf(roomCode)) io.to(member.id).emit("scoreboard", scoreView(roomCode, member.id));
     };
 
     io.use(async (socket, next) => {
@@ -54,15 +68,22 @@ const connectToSocket = (server) => {
         if(!left) return;
         socket.leave(left.roomCode);
         socket.to(left.roomCode).emit("peer-left", socket.id);
-        if(left.empty) games.remove(left.roomCode);
-        else if(games.memberLeft(left.roomCode, socket.id)) broadcastGame(left.roomCode);
+        if(left.empty) {
+            games.remove(left.roomCode);
+            scores.remove(left.roomCode);
+            return;
+        }
+        // Their pending reset vote goes; who is "here" changes for everyone either way.
+        scores.memberLeft(left.roomCode, socket.data.user.id, presentUsers(left.roomCode));
+        if(games.memberLeft(left.roomCode, socket.id)) broadcastGame(left.roomCode);
+        else broadcastScores(left.roomCode);
     };
 
     io.on("connection", (socket) => {
         const reply = (ack, payload) => typeof ack === "function" && ack(payload);
         const chatAllowed = createLimiter(10, 10000);
         const gameAllowed = createLimiter(30, 5000);
-        const self = () => ({id: socket.id, name: socket.data.user.name});
+        const self = () => ({id: socket.id, name: socket.data.user.name, userId: socket.data.user.id});
 
         socket.on("join-room", (roomCode, ack) => {
             if(!isValidRoomCode(roomCode)) return reply(ack, {ok: false, error: "That meeting code isn't valid."});
@@ -76,7 +97,9 @@ const connectToSocket = (server) => {
 
             socket.join(roomCode);
             socket.to(roomCode).emit("peer-joined", participant);
-            reply(ack, {ok: true, self: participant, peers: result.peers, messages: result.messages, game: games.view(roomCode, socket.id)});
+            reply(ack, {ok: true, self: participant, peers: result.peers, messages: result.messages, game: games.view(roomCode, socket.id), scoreboard: scoreView(roomCode, socket.id)});
+            // Someone back on the scoreboard changes who still has to agree to a reset.
+            broadcastScores(roomCode);
         });
 
         socket.on("signal", (toId, signalMessage) => {
@@ -131,6 +154,8 @@ const connectToSocket = (server) => {
         onGameAction("game-move", (roomCode, move) => games.move(roomCode, socket.id, move));
         onGameAction("game-close", (roomCode) => games.close(roomCode, socket.id));
         onGameAction("game-rematch", (roomCode) => games.rematch(roomCode, self()));
+        // Ask for (true) or take back (false) a reset of the room's win tally; it resets once everyone here agrees.
+        onGameAction("scores-reset", (roomCode, agree) => scores.vote(roomCode, socket.data.user.id, agree === true, presentUsers(roomCode)));
 
         socket.on("leave-room", () => leaveCurrentRoom(socket));
 

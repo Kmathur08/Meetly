@@ -43,18 +43,23 @@ export default function BingoBoard({ board, selfId, onMove }) {
   const myLines = me?.score || 0
 
   return <div className="bingo">
+    {/* One row for the last call, the tip and the shuffle button, so the card gets the height. */}
     <div className="bingo-called">
       <span className="bingo-last" aria-live="polite">{lastCalled ?? '–'}</span>
-      <span>{board.called.length === 0 ? 'No numbers called yet' : `${board.called.length} of 25 called`}</span>
+      <span className="bingo-called-text">
+        {board.called.length === 0 ? 'No numbers called yet' : `${board.called.length} of 25 called`}
+        {board.card && myTurn && <small>Tap a number to call it for everyone.</small>}
+      </span>
+      {board.card && board.called.length === 0 && !board.finished && <button className="game-link" onClick={() => onMove({ action: 'shuffle' })}>↻ Shuffle</button>}
     </div>
 
     {board.card && <>
-      <div className="bingo-letters" aria-label={`${myLines} of ${board.linesToWin} lines`}>
-        {[...LETTERS].map((letter, i) => <span key={letter} className={i < myLines ? 'lit' : ''}>{letter}</span>)}
+      <div className="board-fit">
+        <div className="bingo-letters" aria-label={`${myLines} of ${board.linesToWin} lines`}>
+          {[...LETTERS].map((letter, i) => <span key={letter} className={i < myLines ? 'lit' : ''}>{letter}</span>)}
+        </div>
+        <Card card={board.card} called={called} lastCalled={lastCalled} canPick={myTurn} onPick={(number) => onMove({ number })} />
       </div>
-      <Card card={board.card} called={called} lastCalled={lastCalled} canPick={myTurn} onPick={(number) => onMove({ number })} />
-      {myTurn && <p className="game-hint">Tap a number on your card to call it for everyone.</p>}
-      {board.called.length === 0 && !board.finished && <button className="game-link" onClick={() => onMove({ action: 'shuffle' })}>↻ Shuffle my card</button>}
     </>}
 
     {board.cards && <details className="bingo-reveal">

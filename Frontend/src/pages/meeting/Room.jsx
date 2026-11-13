@@ -39,6 +39,23 @@ export default function Room({ user, roomCode, media, meeting, screen, onLeave }
   // A game waiting for players that I haven't joined yet.
   const gameInvite = gamePhase === 'lobby' && !amPlaying
   const previousPhase = useRef(gamePhase)
+  // Someone asked to reset the room's win tally and I haven't agreed yet.
+  const { scoreboard } = meeting
+  const myTally = scoreboard?.rows.find((row) => row.you)
+  const resetAsk = Boolean(scoreboard?.resetRequested && myTally && !myTally.agreed)
+  const wasResetRequested = useRef(false)
+
+  useEffect(() => {
+    const before = wasResetRequested.current
+    const now = Boolean(scoreboard?.resetRequested)
+    wasResetRequested.current = now
+    if (!before && resetAsk) {
+      const askers = scoreboard.rows.filter((row) => row.agreed).map((row) => row.name).join(', ')
+      setNotice(`${askers} wants to reset the scores. Open Games to agree.`)
+    } else if (before && !now && scoreboard?.rows.every((row) => row.wins === 0)) {
+      setNotice('Scores reset to 0.')
+    }
+  }, [scoreboard, resetAsk])
 
   // Tell people when someone opens a game, and bring the board up for players when it starts.
   useEffect(() => {
@@ -81,7 +98,8 @@ export default function Room({ user, roomCode, media, meeting, screen, onLeave }
   }
 
   return <main className={`meeting-room${gamesOpen ? ' games-open' : ''}`}>
-    <header className="meeting-header"><a className="brand" href="#home"><Brand /><span>Meetly</span></a><span className="room-label">Room {roomCode}</span><button className="leave-button" onClick={onLeave}>Leave room</button></header>
+    {/* No header bar: just the logo and room code in the corner, so the call gets the whole screen. Leave is in the control bar. */}
+    <header className="meeting-corner"><a className="brand" href="#home"><Brand /><span>Meetly</span></a><span className="room-label">{roomCode}</span></header>
     {meeting.status === 'reconnecting' && <div className="connection-banner" role="status">Connection lost. Reconnecting…</div>}
     <section className={`meeting-stage people-${Math.min(peers.length + 1, 6)}`}>
       {screen.sharing
@@ -98,14 +116,14 @@ export default function Room({ user, roomCode, media, meeting, screen, onLeave }
       <button className={media.micOn ? '' : 'off'} onClick={media.toggleMic} disabled={!media.hasAudio} aria-pressed={!media.micOn}><Icon name={media.micOn ? 'mic' : 'micOff'} /><span>{media.micOn ? 'Mute' : 'Unmute'}</span></button>
       <button className={media.cameraOn ? '' : 'off'} onClick={media.toggleCamera} disabled={!media.hasVideo} aria-pressed={!media.cameraOn}><Icon name={media.cameraOn ? 'cam' : 'camOff'} /><span>{media.cameraOn ? 'Stop video' : 'Start video'}</span></button>
       {screen.supported && <button className={screen.sharing ? 'active-control' : ''} onClick={async () => { if (screen.sharing) screen.stop(); else if (!(await screen.start())) setNotice('Screen sharing was cancelled.') }}><Icon name="screen" /><span>{screen.sharing ? 'Stop share' : 'Share'}</span></button>}
-      <button className={gamesOpen ? 'active-control' : ''} onClick={() => togglePanel('games')} aria-expanded={gamesOpen}><Icon name="games" /><span>Games</span>{gameInvite && !gamesOpen && <b className="unread-badge" aria-label="Game invite">!</b>}</button>
+      <button className={gamesOpen ? 'active-control' : ''} onClick={() => togglePanel('games')} aria-expanded={gamesOpen}><Icon name="games" /><span>Games</span>{(gameInvite || resetAsk) && !gamesOpen && <b className="unread-badge" aria-label={gameInvite ? 'Game invite' : 'Score reset request'}>!</b>}</button>
       <button className={chatOpen ? 'active-control' : ''} onClick={() => togglePanel('chat')} aria-expanded={chatOpen}><Icon name="chat" /><span>Chat</span>{unread > 0 && <b className="unread-badge" aria-label={`${unread} unread`}>{unread}</b>}</button>
       <button onClick={copyLink}><Icon name="invite" /><span>Invite</span></button>
       <i className="control-divider" aria-hidden="true" />
       <button className="leave-control" onClick={onLeave}><Icon name="leave" /><span>Leave</span></button>
     </nav>
     {chatOpen && <ChatPanel messages={meeting.messages} selfId={meeting.selfId} onSend={meeting.sendMessage} onClose={() => setPanel(null)} />}
-    {gamesOpen && <GamePanel game={game} selfId={selfId} onAction={meeting.gameAction} onClose={() => setPanel(null)} onNotice={setNotice} />}
+    {gamesOpen && <GamePanel game={game} scoreboard={scoreboard} selfId={selfId} onAction={meeting.gameAction} onClose={() => setPanel(null)} onNotice={setNotice} />}
     <div className={`meeting-notice${notice ? ' visible' : ''}`} role="status">{notice}</div>
   </main>
 }

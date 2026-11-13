@@ -26,6 +26,13 @@ export const GAMES = [
     option: { key: 'dots', label: 'Board', choices: [4, 5, 6, 7].map((dots) => ({ value: dots, label: `${dots}×${dots} dots` })), initial: 5 },
   },
   {
+    id: 'fence-race',
+    name: 'Fence Race',
+    players: '2–4 players',
+    blurb: 'Race your pawn to the far side. Each turn, step one square or drop a fence to block someone, but always leave them a way through.',
+    option: { key: 'size', label: 'Board', choices: [7, 9].map((size) => ({ value: size, label: `${size}×${size}` })), initial: 9 },
+  },
+  {
     id: 'word-search',
     name: 'Word Search',
     players: '1–6 players',

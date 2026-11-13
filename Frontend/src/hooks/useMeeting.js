@@ -16,6 +16,8 @@ export default function useMeeting({ roomCode, localStream, enabled, mediaState 
   const [peers, setPeers] = useState({})
   const [messages, setMessages] = useState([])
   const [game, setGame] = useState(null)
+  // Wins per person in this room across games; null until someone finishes a game.
+  const [scoreboard, setScoreboard] = useState(null)
   const [status, setStatus] = useState('idle')
   const [error, setError] = useState('')
 
@@ -141,6 +143,7 @@ export default function useMeeting({ roomCode, localStream, enabled, mediaState 
       connections.clear()
       setPeers({})
       setGame(null)
+      setScoreboard(null)
     }
 
     const join = () => {
@@ -155,6 +158,7 @@ export default function useMeeting({ roomCode, localStream, enabled, mediaState 
         setSelfId(reply.self.id)
         setMessages(reply.messages)
         setGame(reply.game || null)
+        setScoreboard(reply.scoreboard || null)
         // The newcomer is the impolite side, so existing members yield if both offer at once.
         reply.peers.forEach((peer) => createConnection(peer, false))
         socket.emit('media-state', mediaStateRef.current)
@@ -186,6 +190,7 @@ export default function useMeeting({ roomCode, localStream, enabled, mediaState 
     socket.on('signal', handleSignal)
     socket.on('chat-message', (message) => setMessages((current) => [...current, message]))
     socket.on('game-state', setGame)
+    socket.on('scoreboard', setScoreboard)
 
     // Connect only once the TURN/STUN list is known, so the first peer connections already use it.
     api('ice-servers')
@@ -226,5 +231,5 @@ export default function useMeeting({ roomCode, localStream, enabled, mediaState 
     socket.timeout(8000).emit(event, ...args, (err, reply) => resolve(err ? { ok: false, error: 'The server didn’t answer. Try again.' } : reply))
   }), [])
 
-  return { selfId, peers, messages, game, status, error, sendMessage, gameAction, setScreenTrack }
+  return { selfId, peers, messages, game, scoreboard, status, error, sendMessage, gameAction, setScreenTrack }
 }

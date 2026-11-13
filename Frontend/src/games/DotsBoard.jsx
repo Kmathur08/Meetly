@@ -41,11 +41,11 @@ export default function DotsBoard({ board, selfId, onMove }) {
   for (let r = 0; r < n; r += 1) for (let c = 0; c <= n; c += 1) lines.push(line('v', r, c, board.v[r * (n + 1) + c]))
 
   return <div className="dots">
-    <svg viewBox={`0 0 ${size} ${size}`} className="dots-board" role="img" aria-label="Dots and houses board">
+    <div className="board-fit"><svg viewBox={`0 0 ${size} ${size}`} className="dots-board" role="img" aria-label="Dots and houses board">
       {board.boxes.map((owner, i) => owner !== null && <House key={i} x={PAD + (i % n) * GAP} y={PAD + Math.floor(i / n) * GAP} color={PLAYER_COLORS[owner]} />)}
       {lines}
       {Array.from({ length: board.dots * board.dots }, (_, i) => <circle key={i} cx={PAD + (i % board.dots) * GAP} cy={PAD + Math.floor(i / board.dots) * GAP} r="5" className="dot" />)}
-    </svg>
+    </svg></div>
     <ul className="game-scores">
       {board.players.map((player, seat) => <li key={player.id} className={`${player.gone ? 'gone' : ''}${player.id === board.current ? ' turn' : ''}`}>
         <i style={{ background: PLAYER_COLORS[seat] }} />{nameOf(board.players, player.id, selfId)}

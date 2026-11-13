@@ -8,6 +8,7 @@
   bottom: 88px;
   width: min(360px, calc(100% - 32px));
   height: 420px;
+  max-height: calc(100dvh - 104px);
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 16px;
@@ -80,12 +81,32 @@
     display: none;
   }
 }
+/* The stage fills the space between the header and the control bar, and every tile takes the
+   largest size that fits both its column width and its row height, so nothing overflows. */
 .meeting-room .meeting-stage {
+  --gap: 12px;
+  --cols: 1;
+  --rows: 1;
+  --ratio: 1.7778;
+  --reserve: 0px;
+  container-type: size;
+  height: calc(100vh - var(--corner) - 112px);
+  height: calc(100dvh - var(--corner) - 112px);
+  min-height: 0;
+  padding: 0 0 12px;
   display: grid;
-  gap: 12px;
-  padding: 16px 0 96px;
+  gap: var(--gap);
+  grid-template-columns: repeat(var(--cols), auto);
+  justify-content: center;
   align-content: center;
-  grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr));
+}
+.meeting-room .meeting-stage .video-tile {
+  width: min(
+    (100cqw - (var(--cols) - 1) * var(--gap)) / var(--cols),
+    (100cqh - var(--reserve) - (var(--rows) - 1) * var(--gap)) / var(--rows) * var(--ratio)
+  );
+  aspect-ratio: var(--ratio);
+  max-height: none;
 }
 .meeting-stage.people-2 {
   --cols: 2;
@@ -93,35 +114,38 @@
 .meeting-stage.people-3,
 .meeting-stage.people-4 {
   --cols: 2;
+  --rows: 2;
 }
 .meeting-stage.people-5,
 .meeting-stage.people-6 {
   --cols: 3;
+  --rows: 2;
 }
-.meeting-stage.people-1 .stage-empty {
-  position: absolute;
-  inset: auto 0 120px;
+/* Portrait screens (phones): stack two people, and use taller tiles in two columns for more. */
+@media (orientation: portrait) {
+  .meeting-stage.people-2 {
+    --cols: 1;
+    --rows: 2;
+  }
+  .meeting-stage.people-3,
+  .meeting-stage.people-4 {
+    --ratio: 0.75;
+  }
+  .meeting-stage.people-5,
+  .meeting-stage.people-6 {
+    --cols: 2;
+    --rows: 3;
+    --ratio: 0.75;
+  }
 }
 .video-tile {
   position: relative;
   margin: 0;
   aspect-ratio: 16 / 9;
-  max-height: calc((100vh - 220px) / var(--rows, 1));
   border-radius: 14px;
   overflow: hidden;
   background: #28263a;
   border: 1px solid rgba(255, 255, 255, 0.08);
-}
-.meeting-stage.people-1 .video-tile {
-  max-width: 900px;
-  width: 100%;
-  margin: 0 auto;
-}
-.meeting-stage.people-3,
-.meeting-stage.people-4,
-.meeting-stage.people-5,
-.meeting-stage.people-6 {
-  --rows: 2;
 }
 .video-tile video {
   width: 100%;
@@ -203,7 +227,7 @@
 }
 .connection-banner {
   position: fixed;
-  top: 92px;
+  top: 14px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 6;
@@ -219,20 +243,6 @@
   background: none;
   cursor: pointer;
 }
-@media (max-width: 760px) {
-  .meeting-stage.people-2,
-  .meeting-stage.people-3,
-  .meeting-stage.people-4 {
-    --cols: 1;
-  }
-  .meeting-stage.people-5,
-  .meeting-stage.people-6 {
-    --cols: 2;
-  }
-  .video-tile {
-    max-height: none;
-  }
-}
 .meeting-room .chat-panel {
   color: var(--ink);
 }
@@ -246,14 +256,13 @@
 .meeting-room .stage-empty p {
   margin: 0 0 18px;
 }
-/* Alone in the room: shrink your own tile and put the invite card under it instead of on top of the avatar. */
+/* Alone in the room: your tile, with the invite card under it. The tile leaves room for the card. */
 .meeting-room .meeting-stage.people-1 {
+  --reserve: 196px;
   justify-items: center;
 }
 .meeting-room .meeting-stage.people-1 .video-tile {
   max-width: 760px;
-  max-height: calc(100vh - 430px);
-  min-height: 220px;
 }
 .meeting-stage.people-1 .stage-empty {
   position: static;
@@ -340,6 +349,11 @@
   margin: 0;
 }
 @media (max-width: 640px) {
+  /* The control bar is shorter here. */
+  .meeting-room .meeting-stage {
+    height: calc(100vh - var(--corner) - 80px);
+    height: calc(100dvh - var(--corner) - 80px);
+  }
   .meeting-room .meeting-controls {
     bottom: 12px;
     gap: 2px;
@@ -349,8 +363,16 @@
     min-width: 0;
     padding: 10px;
   }
+  /* Icons only on phones, but the label stays readable to screen readers (Leave is the only way out). */
   .meeting-room .meeting-controls button span {
-    display: none;
+    display: block;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
   .control-divider {
     display: none;
@@ -389,4 +411,38 @@
 }
 .meeting-room .chat-message b {
   color: #b3a6ff;
+}
+
+/* ---------- Corner logo (replaces the header bar) ---------- */
+.meeting-room {
+  /* Height of the strip at the top that holds the logo; the stage starts below it. */
+  --corner: 60px;
+  padding-top: var(--corner);
+}
+.meeting-corner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: var(--corner);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 3;
+}
+.meeting-corner .room-label {
+  margin: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 12px;
+  letter-spacing: 0.3px;
+}
+@media (max-width: 640px) {
+  .meeting-room {
+    --corner: 52px;
+  }
+  .meeting-corner {
+    padding: 0 16px;
+  }
 }

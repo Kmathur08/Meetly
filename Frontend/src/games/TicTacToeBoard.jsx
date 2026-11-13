@@ -17,7 +17,7 @@ export default function TicTacToeBoard({ board, selfId, onMove }) {
   return <div className="ttt">
     {myMark && <p className="game-hint">You are <b style={{ color: colorOf(myMark) }}>{myMark === 'X' ? 'Cross (X)' : 'Zero (O)'}</b>
       {board.fading && <> · faded marks vanish on that player’s next move</>}</p>}
-    <div className="ttt-grid" role="grid" aria-label="Zero and cross board">
+    <div className="board-fit"><div className="ttt-grid" role="grid" aria-label="Zero and cross board">
       {board.cells.map((mark, cell) => {
         const winning = board.line?.includes(cell)
         const vanishing = !board.finished && board.vanishing.includes(cell)
@@ -30,6 +30,6 @@ export default function TicTacToeBoard({ board, selfId, onMove }) {
           aria-label={mark ? `${mark}${vanishing ? ', vanishes next' : ''}` : `Empty square ${cell + 1}`}
         >{mark && <Mark mark={mark} />}</button>
       })}
-    </div>
+    </div></div>
   </div>
 }

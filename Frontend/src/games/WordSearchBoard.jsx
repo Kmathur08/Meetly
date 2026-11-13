@@ -81,7 +81,7 @@ export default function WordSearchBoard({ board, selfId, onMove }) {
 
   return <div className="words">
     <p className="game-hint">Theme: <b>{board.theme}</b> · {foundCount} of {board.words.length} found{playing && ' · drag across a word, or tap its first and last letter'}</p>
-    <div
+    <div className="board-fit"><div
       className={`words-grid${miss ? ' miss' : ''}${playing ? ' active' : ''}`}
       style={{ '--size': board.grid.length }}
       onPointerDown={onPointerDown}
@@ -94,7 +94,7 @@ export default function WordSearchBoard({ board, selfId, onMove }) {
         const color = foundColors.get(key)
         return <span key={key} data-cell={key} className={`words-cell${previewCells.has(key) ? ' selecting' : ''}${color ? ' found' : ''}`} style={color ? { '--found': color } : undefined}>{letter}</span>
       }))}
-    </div>
+    </div></div>
     <ul className="words-list">
       {board.words.map((word) => <li key={word.word} className={word.foundBy ? 'found' : ''} style={word.foundBy ? { '--found': colorOf(board.players, word.foundBy) } : undefined} title={word.foundBy ? `Found by ${nameOf(board.players, word.foundBy, selfId)}` : undefined}>{word.word}</li>)}
     </ul>

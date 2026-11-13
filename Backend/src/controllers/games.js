@@ -3,10 +3,13 @@ import {GAMES} from "../games/index.js";
 // One game per room. A game goes lobby -> playing -> finished. Whoever opens it is the host:
 // they start it, can end it early, and the role passes on if they leave.
 // Kept free of socket.io so it can be unit tested.
-export const createGameRegistry = ({random = Math.random} = {}) => {
+// onResult(roomCode, players, winnerUserIds) is called once for every game that is played to the end.
+export const createGameRegistry = ({random = Math.random, onResult = () => {}} = {}) => {
     const sessions = new Map();
 
     const fail = (error) => ({ok: false, error});
+    // Players carry their account id (falling back to the connection id) so results follow the person.
+    const seat = (participant) => ({id: participant.id, name: participant.name, userId: participant.userId ?? participant.id});
 
     const open = (roomCode, host, type, options) => {
         const game = GAMES[type];
@@ -19,7 +22,7 @@ export const createGameRegistry = ({random = Math.random} = {}) => {
             options: game.normalizeOptions ? game.normalizeOptions(options) : {},
             phase: "lobby",
             hostId: host.id,
-            players: [{id: host.id, name: host.name}],
+            players: [seat(host)],
             state: null
         });
         return {ok: true};
@@ -30,7 +33,7 @@ export const createGameRegistry = ({random = Math.random} = {}) => {
         if(!session || session.phase !== "lobby") return fail("There's no game waiting for players.");
         if(session.players.some((player) => player.id === participant.id)) return {ok: true};
         if(session.players.length >= GAMES[session.type].maxPlayers) return fail("This game is full.");
-        session.players.push({id: participant.id, name: participant.name});
+        session.players.push(seat(participant));
         return {ok: true};
     };
 
@@ -64,7 +67,11 @@ export const createGameRegistry = ({random = Math.random} = {}) => {
         const session = sessions.get(roomCode);
         if(!session || session.phase !== "playing") return fail("No game is being played.");
         const result = GAMES[session.type].move(session.state, playerId, payload);
-        if(session.state.finished) session.phase = "finished";
+        if(session.state.finished) {
+            session.phase = "finished";
+            const userIdOf = (id) => session.players.find((player) => player.id === id)?.userId;
+            onResult(roomCode, session.players, session.state.winners.map(userIdOf).filter(Boolean));
+        }
         return result;
     };
 
@@ -83,7 +90,7 @@ export const createGameRegistry = ({random = Math.random} = {}) => {
         if(!session || session.phase !== "finished") return fail("The game isn't over yet.");
         const players = session.players.some((player) => player.id === participant.id)
             ? session.players
-            : [{id: participant.id, name: participant.name}, ...session.players];
+            : [seat(participant), ...session.players];
         sessions.set(roomCode, {
             ...session,
             phase: "lobby",
@@ -118,7 +125,7 @@ export const createGameRegistry = ({random = Math.random} = {}) => {
             name: game.name,
             phase: session.phase,
             hostId: session.hostId,
-            players: session.players,
+            players: session.players.map(({id, name}) => ({id, name})),
             options: session.options,
             minPlayers: game.minPlayers,
             maxPlayers: game.maxPlayers,

@@ -1,6 +1,6 @@
 .game-panel {
   position: fixed;
-  top: 96px;
+  top: 16px;
   right: 24px;
   bottom: 88px;
   width: min(420px, calc(100% - 32px));
@@ -14,14 +14,100 @@
   z-index: 5;
   overflow: hidden;
 }
+/* No header bar: just the game name and a close button, so the board gets the room. */
+.game-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 10px 0 18px;
+}
+.game-heading strong {
+  font: 700 15px "Space Grotesk", sans-serif;
+}
+.game-heading button {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.game-heading button:hover {
+  background: var(--soft);
+  color: var(--ink);
+}
+/* A column where only the board shrinks: everything else keeps its size and the board
+   takes whatever height is left, so a game fits the panel without scrolling. */
 .game-body {
   flex: 1;
+  min-height: 0;
   overflow: auto;
-  padding: 16px 18px 20px;
-  display: grid;
-  align-content: start;
-  gap: 14px;
+  padding: 10px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
+.game-body > * {
+  flex: none;
+}
+.game-body > .bingo,
+.game-body > .dots,
+.game-body > .words,
+.game-body > .ttt,
+.game-body > .fence {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.game-body > .bingo > *,
+.game-body > .dots > *,
+.game-body > .words > *,
+.game-body > .ttt > *,
+.game-body > .fence > * {
+  flex: none;
+}
+/* The board's box: up to its full size, shrinking with the panel down to a playable minimum.
+   The board inside is the largest square that fits, after --board-extra (e.g. Bingo's letter row). */
+.game-body .board-fit {
+  flex: 0 1 calc(var(--board-max) + var(--board-extra, 0px));
+  min-height: 180px;
+  container-type: size;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.board-fit > * {
+  flex: none;
+  width: min(100cqw, 100cqh - var(--board-extra, 0px), var(--board-max)) !important;
+}
+/* Grids are square with equal rows, so their height always matches their width. */
+.board-fit > .bingo-grid,
+.board-fit > .ttt-grid,
+.board-fit > .words-grid {
+  aspect-ratio: 1;
+}
+.board-fit > .bingo-grid { grid-template-rows: repeat(5, minmax(0, 1fr)); }
+.board-fit > .ttt-grid { grid-template-rows: repeat(3, minmax(0, 1fr)); }
+.board-fit > .words-grid { grid-template-rows: repeat(var(--size), minmax(0, 1fr)); }
+.board-fit .bingo-cell,
+.board-fit .ttt-cell,
+.board-fit .words-cell {
+  aspect-ratio: auto;
+  min-height: 0;
+  padding: 0;
+}
+.bingo { --board-max: 340px; --board-extra: 36px; }
+.dots { --board-max: 340px; }
+.words { --board-max: 360px; }
+.ttt { --board-max: 300px; }
+.fence { --board-max: 360px; }
 .game-hint {
   margin: 0;
   color: var(--muted);
@@ -29,7 +115,7 @@
   line-height: 1.5;
 }
 .game-link {
-  justify-self: start;
+  align-self: flex-start;
   border: 0;
   background: none;
   padding: 4px 0;
@@ -137,7 +223,7 @@
   color: #fff;
 }
 .game-main {
-  justify-self: start;
+  align-self: flex-start;
 }
 
 /* Lobby */
@@ -202,6 +288,10 @@
   display: grid;
   gap: 4px;
   font-size: 13px;
+}
+/* Two columns when there's room, so four players don't push the board out of view. */
+.game-scores {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
 }
 .game-scores li {
   display: flex;
@@ -279,11 +369,24 @@
   color: var(--muted);
   font-size: 12.5px;
 }
+.bingo-called-text {
+  flex: 1;
+  display: grid;
+  gap: 1px;
+}
+.bingo-called-text small {
+  font-size: 11.5px;
+  opacity: 0.85;
+}
+.bingo-called .game-link {
+  flex: none;
+  align-self: center;
+}
 .bingo-last {
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: var(--night);
   color: #fff;
@@ -293,8 +396,8 @@
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 6px;
-  width: min(100%, 320px);
-  justify-self: center;
+  height: 30px;
+  align-items: center;
 }
 .bingo-letters span {
   text-align: center;
@@ -310,8 +413,6 @@
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 6px;
-  width: min(100%, 320px);
-  justify-self: center;
 }
 .bingo-cell {
   position: relative;
@@ -321,7 +422,7 @@
   background: #fff;
   color: var(--ink);
   font-weight: 700;
-  font-size: 17px;
+  font-size: clamp(13px, 5cqmin, 17px);
   cursor: pointer;
 }
 .bingo-cell:not(:disabled):hover {
@@ -421,7 +522,8 @@
   place-items: center;
   aspect-ratio: 1;
   border-radius: 6px;
-  font-size: clamp(11px, 3.2vw, 15px);
+  /* Scales with the grid, which itself scales with the panel. */
+  font-size: clamp(9px, 42cqmin / var(--size), 15px);
   font-weight: 700;
 }
 .words-cell.found {
@@ -572,4 +674,157 @@
 }
 .game-picker button:hover .game-icon {
   transform: translateY(-1px) scale(1.04);
+}
+
+/* Fence Race */
+.fence {
+  display: grid;
+  gap: 10px;
+}
+.fence-tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+.fence-tools button {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.fence-tools button.chosen {
+  background: var(--purple);
+  border-color: var(--purple);
+  color: #fff;
+}
+.fence-tools button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.fence-board {
+  width: min(100%, 360px);
+  justify-self: center;
+  touch-action: manipulation;
+  user-select: none;
+}
+.fence-cell {
+  fill: var(--soft);
+}
+.fence-cell.open {
+  fill: #d9d4ff;
+  cursor: pointer;
+}
+.fence-cell.open:hover {
+  fill: #c3baff;
+}
+.fence-last {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+.fence-ghost {
+  fill: var(--purple);
+  opacity: 0.45;
+  pointer-events: none;
+}
+.fence-ghost.bad {
+  fill: #e0457b;
+}
+.fence-spot {
+  fill: transparent;
+  cursor: pointer;
+}
+.fence-cell.open:focus-visible,
+.fence-spot:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 1px;
+}
+.fence-tip {
+  text-align: center;
+  margin: 0;
+}
+
+/* Scoreboard: wins across games in this room */
+.tally {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--soft);
+}
+.tally-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tally-head h4 {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.tally-head .game-link {
+  align-self: center;
+  padding: 0;
+  font-size: 12px;
+}
+.tally-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.tally-rows li {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 14px;
+}
+.tally-rows li span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tally-rows li.you span {
+  font-weight: 700;
+}
+.tally-rows li.away {
+  opacity: 0.55;
+}
+.tally-rows b {
+  font: 700 18px "Space Grotesk", sans-serif;
+}
+.tally-rows small {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+.tally-reset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.tally-reset p {
+  flex: 1 1 180px;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.tally-reset .button {
+  padding: 8px 16px;
+  font-size: 13px;
+}
+.tally-reset .game-link {
+  align-self: center;
 }
